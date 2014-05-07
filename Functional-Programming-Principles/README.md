@@ -1,0 +1,1 @@
+Contains things I did for the _Functional Programming Principles in Scala_ course at _Coursera.org_
