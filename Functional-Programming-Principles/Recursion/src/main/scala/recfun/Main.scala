@@ -31,6 +31,7 @@ object Main {
         newLine(0)=1
         newLine(colsPerLine-1)=1
 
+        // TODO: Replace for-loop and use a more elegant solution
         for(i <- 0 until line.size - 1) {
 
           newLine(1+i) = line(i) + line(i+1)
