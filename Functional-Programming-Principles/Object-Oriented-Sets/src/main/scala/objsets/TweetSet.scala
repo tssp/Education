@@ -56,6 +56,9 @@ abstract class TweetSet {
    */
    def union(that: TweetSet): TweetSet = filterAcc( p => true, that)
 
+   def hasTweetWithMoreRetweets(retweets:Int): Boolean
+   def findTweetWithMoreRetweets(tweet:Tweet): Tweet
+
   /**
    * Returns the tweet from this set which has the greatest retweet count.
    *
@@ -65,7 +68,7 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet = ???
+  def mostRetweeted: Tweet
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -109,6 +112,11 @@ abstract class TweetSet {
 
 class Empty extends TweetSet {
 
+  def mostRetweeted: Tweet = throw new java.util.NoSuchElementException
+
+  def hasTweetWithMoreRetweets(retweets:Int) = false
+  def findTweetWithMoreRetweets(tweet:Tweet) = tweet
+
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = acc
 
   /**
@@ -125,10 +133,18 @@ class Empty extends TweetSet {
 }
 
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
+     
+  def mostRetweeted: Tweet = findTweetWithMoreRetweets(elem)
 
+  def hasTweetWithMoreRetweets(retweets:Int) =
+    if(elem.retweets > retweets) right.hasTweetWithMoreRetweets(elem.retweets) || left.hasTweetWithMoreRetweets(elem.retweets)
+    else right.hasTweetWithMoreRetweets(retweets) || left.hasTweetWithMoreRetweets(retweets)
+
+  def findTweetWithMoreRetweets(tweet:Tweet) =
+    if(elem.retweets > tweet.retweets) right.findTweetWithMoreRetweets(left.findTweetWithMoreRetweets(elem))
+    else right.findTweetWithMoreRetweets(left.findTweetWithMoreRetweets(tweet))
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = 
-
     if(p(elem)) right.filterAcc(p, left.filterAcc(p, acc.incl(elem)))
     else right.filterAcc(p, left.filterAcc(p, acc))
 
