@@ -5,6 +5,16 @@ import TweetReader._
 
 /**
  * A class to represent tweets.
+ *
+ *
+ *  #######                            
+ *    #    #    # ###### ###### ##### 
+ *    #    #    # #      #        #   
+ *    #    #    # #####  #####    #   
+ *    #    # ## # #      #        #   
+ *    #    ##  ## #      #        #   
+ *    #    #    # ###### ######   #   
+ *                                     
  */
 class Tweet(val user: String, val text: String, val retweets: Int) {
   override def toString: String =
@@ -31,6 +41,15 @@ class Tweet(val user: String, val text: String, val retweets: Int) {
  * at the Wikipedia page [1], but this is not necessary in order to solve this
  * assignment.
  *
+ * #######                             #####               
+ *    #    #    # ###### ###### ##### #     # ###### ##### 
+ *    #    #    # #      #        #   #       #        #   
+ *    #    #    # #####  #####    #    #####  #####    #   
+ *    #    # ## # #      #        #         # #        #   
+ *    #    ##  ## #      #        #   #     # #        #   
+ *    #    #    # ###### ######   #    #####  ######   #   
+ *                                                         
+ * 
  * [1] http://en.wikipedia.org/wiki/Binary_search_tree
  */
 abstract class TweetSet {
@@ -68,7 +87,7 @@ abstract class TweetSet {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet
+  def mostRetweeted: Tweet 
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -110,6 +129,18 @@ abstract class TweetSet {
   def foreach(f: Tweet => Unit): Unit
 }
 
+
+/*
+ *
+ * #######                              #######                             #####               
+ * #       #    # #####  ##### #   #       #    #    # ###### ###### ##### #     # ###### ##### 
+ * #       ##  ## #    #   #    # #        #    #    # #      #        #   #       #        #   
+ * #####   # ## # #    #   #     #         #    #    # #####  #####    #    #####  #####    #   
+ * #       #    # #####    #     #         #    # ## # #      #        #         # #        #   
+ * #       #    # #        #     #         #    ##  ## #      #        #   #     # #        #   
+ * ####### #    # #        #     #         #    #    # ###### ######   #    #####  ######   #   
+ *                                                                                             
+ */
 class Empty extends TweetSet {
 
   def mostRetweeted: Tweet = throw new java.util.NoSuchElementException
@@ -132,6 +163,17 @@ class Empty extends TweetSet {
   def foreach(f: Tweet => Unit): Unit = ()
 }
 
+/*
+ *
+ * #     #                     #######                              #######                             #####               
+ * ##    #  ####  #    #       #       #    # #####  ##### #   #       #    #    # ###### ###### ##### #     # ###### ##### 
+ * # #   # #    # ##   #       #       ##  ## #    #   #    # #        #    #    # #      #        #   #       #        #   
+ * #  #  # #    # # #  # ##### #####   # ## # #    #   #     #         #    #    # #####  #####    #    #####  #####    #   
+ * #   # # #    # #  # #       #       #    # #####    #     #         #    # ## # #      #        #         # #        #   
+ * #    ## #    # #   ##       #       #    # #        #     #         #    ##  ## #      #        #   #     # #        #   
+ * #     #  ####  #    #       ####### #    # #        #     #         #    #    # ###### ######   #    #####  ######   #   
+ *                                                                                                                          
+ */
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
      
   def mostRetweeted: Tweet = findTweetWithMoreRetweets(elem)
@@ -176,6 +218,18 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
   }
 }
 
+/*
+ *
+ *
+ * #######                            #                      
+ *    #    #    # ###### ###### ##### #       #  ####  ##### 
+ *    #    #    # #      #        #   #       # #        #   
+ *    #    #    # #####  #####    #   #       #  ####    #   
+ *    #    # ## # #      #        #   #       #      #   #   
+ *    #    ##  ## #      #        #   #       # #    #   #   
+ *    #    #    # ###### ######   #   ####### #  ####    #   
+ *                                                            
+ */
 trait TweetList {
   def head: Tweet
   def tail: TweetList
@@ -187,12 +241,37 @@ trait TweetList {
     }
 }
 
+/*
+ *
+ * #     #             #######                            #                      
+ * ##    # # #            #    #    # ###### ###### ##### #       #  ####  ##### 
+ * # #   # # #            #    #    # #      #        #   #       # #        #   
+ * #  #  # # #            #    #    # #####  #####    #   #       #  ####    #   
+ * #   # # # #            #    # ## # #      #        #   #       #      #   #   
+ * #    ## # #            #    ##  ## #      #        #   #       # #    #   #   
+ * #     # # ######       #    #    # ###### ######   #   ####### #  ####    #   
+ * 
+ *
+ */
+
 object Nil extends TweetList {
   def head = throw new java.util.NoSuchElementException("head of EmptyList")
   def tail = throw new java.util.NoSuchElementException("tail of EmptyList")
   def isEmpty = true
 }
 
+/*
+ *
+ * 
+ *  #####                          #######                            #                      
+ * #     #  ####  #    #  ####        #    #    # ###### ###### ##### #       #  ####  ##### 
+ * #       #    # ##   # #            #    #    # #      #        #   #       # #        #   
+ * #       #    # # #  #  ####        #    #    # #####  #####    #   #       #  ####    #   
+ * #       #    # #  # #      #       #    # ## # #      #        #   #       #      #   #   
+ * #     # #    # #   ## #    #       #    ##  ## #      #        #   #       # #    #   #   
+ *  #####   ####  #    #  ####        #    #    # ###### ######   #   ####### #  ####    #   
+ * 
+ */
 class Cons(val head: Tweet, val tail: TweetList) extends TweetList {
   def isEmpty = false
 }
