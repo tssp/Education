@@ -75,7 +75,6 @@ abstract class TweetSet {
    */
    def union(that: TweetSet): TweetSet = filterAcc( p => true, that)
 
-   def hasTweetWithMoreRetweets(retweets:Int): Boolean
    def findTweetWithMoreRetweets(tweet:Tweet): Tweet
 
   /**
@@ -148,7 +147,6 @@ class Empty extends TweetSet {
 
   def mostRetweeted: Tweet = throw new java.util.NoSuchElementException
 
-  def hasTweetWithMoreRetweets(retweets:Int) = false
   def findTweetWithMoreRetweets(tweet:Tweet) = tweet
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = acc
@@ -184,10 +182,6 @@ class Empty extends TweetSet {
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
      
   def mostRetweeted: Tweet = findTweetWithMoreRetweets(elem)
-
-  def hasTweetWithMoreRetweets(retweets:Int) =
-    if(elem.retweets > retweets) right.hasTweetWithMoreRetweets(elem.retweets) || left.hasTweetWithMoreRetweets(elem.retweets)
-    else right.hasTweetWithMoreRetweets(retweets) || left.hasTweetWithMoreRetweets(retweets)
 
   def findTweetWithMoreRetweets(tweet:Tweet) =
     if(elem.retweets > tweet.retweets) right.findTweetWithMoreRetweets(left.findTweetWithMoreRetweets(elem))
