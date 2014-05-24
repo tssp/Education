@@ -1,17 +1,21 @@
-== Requirements ==
+README
+======
 
-We expect a folder named "UCI HAR Dataset" within the script directory. Within 
-this folder there must be subfolders of names "test" and "train".
+This repository contains scripts that create a tidy data out of the raw data. The raw data is a collection of observations about *Wearable Computing*.
 
-The "train" folder must have 3 files:
+The file CodeBook.md contains information about the variables, the transformations that have been made to the raw data and how to use the transformation script run_analysis.R .
 
-* X_train.txt -> Training set
-* y_train.txt -> Training labels
-* subject_train.txt -> Each row identifies the subject who performed the activity for each window sample. Its range is from 1 to 30
+The run_analysis.R file contains the R instructions to perform the transformations on the data set and saves the final results.
 
-And the "test" folder:
-* X_test.txt -> Training set
-* y_test.txt -> Training labels
-* subject_test.txt -> Each row identifies the subject who performed the activity for each window sample. Its range is from 1 to 30
+
+See also:
+
+* https://class.coursera.org/getdata-003/
+* http://www.insideactivitytracking.com/data-science-activity-tracking-and-the-battle-for-the-worlds-top-sports-brand/ and
+* http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
+
+
+
+
 
 

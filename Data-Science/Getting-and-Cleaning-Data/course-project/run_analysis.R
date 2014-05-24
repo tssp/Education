@@ -36,7 +36,10 @@ message("Step 0: Preparing Global Variables")
 
 root <- "UCI HAR Dataset"
 dfFeatureNames <- read.table(paste(root, "features.txt", sep="/"), col.names= c("id", "name"), stringsAsFactors=FALSE)
-dfFeatureNames$name <- gsub("\\(|\\)|-", "", dfFeatureNames$name)
+dfFeatureNames$name <- gsub("\\(|\\)|,|-", "", dfFeatureNames$name)
+
+
+
 
 dfActivityLabels <- read.table(paste(root, "activity_labels.txt", sep="/"), col.names= c("id", "name"), stringsAsFactors=FALSE)
 
@@ -63,7 +66,7 @@ message("Step 5: Calculating averages by groups")
 dfStep5 <- data.table(dfStep4)
 dfStep5 <- dfStep5[, lapply(.SD, mean), by = c("activity", "subject")]
 
-columnNamesStep5 <- c("activity", "subject", sapply(dfFeatureNamesStep2$name, function(colname) paste("avg", colname, sep="_")))
+columnNamesStep5 <- c("activity", "subject", sapply(dfFeatureNamesStep2$name, function(colname) paste(colname, "ave", sep="-")))
 setnames(dfStep5, colnames(dfStep5), columnNamesStep5)
 
-write.table(dfStep5, file="result.csv", sep="\t", quote= F, row.names= F)
+write.table(dfStep5, file="tidy_data.csv", sep="\t", quote= F, row.names= F)
