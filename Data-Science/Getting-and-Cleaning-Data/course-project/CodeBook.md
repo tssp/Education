@@ -1,6 +1,6 @@
 # General
 
-This CodeBook describes the raw and tidy data sets about wearable computing. The tidy data set consists of 81 features and 180 observations.
+This CodeBook describes the raw and tidy data sets about wearable computing. The tidy data set contains 81 features and 180 observations.
 
 # Study Design
 
@@ -23,6 +23,94 @@ Please download the data from https://d396qusza40orc.cloudfront.net/getdata%2Fpr
 * UCI HAR Dataset and sub files
 
 Detailled information about the data structure can be found in UCI HAR Dataset/README.
+
+# Code Book
+
+The tidy data set contains 81 features and 180 observations:
+
+* subject *(numeric)*, the unique identifier of the subject under test
+* activity *(factor)*, the friendly name of the activity 
+* tBodyAccmeanX-ave *(numeric)*
+* tBodyAccmeanY-ave *(numeric)*
+* tBodyAccmeanZ-ave *(numeric)*
+* tBodyAccstdX-ave *(numeric)*
+* tBodyAccstdY-ave *(numeric)*
+* tBodyAccstdZ-ave *(numeric)*
+* tGravityAccmeanX-ave *(numeric)*
+* tGravityAccmeanY-ave *(numeric)*
+* tGravityAccmeanZ-ave *(numeric)*
+* tGravityAccstdX-ave *(numeric)*
+* tGravityAccstdY-ave *(numeric)*
+* tGravityAccstdZ-ave *(numeric)*
+* tBodyAccJerkmeanX-ave *(numeric)*
+* tBodyAccJerkmeanY-ave *(numeric)*
+* tBodyAccJerkmeanZ-ave *(numeric)*
+* tBodyAccJerkstdX-ave *(numeric)*
+* tBodyAccJerkstdY-ave *(numeric)*
+* tBodyAccJerkstdZ-ave *(numeric)*
+* tBodyGyromeanX-ave *(numeric)*
+* tBodyGyromeanY-ave *(numeric)*
+* tBodyGyromeanZ-ave *(numeric)*
+* tBodyGyrostdX-ave *(numeric)*
+* tBodyGyrostdY-ave *(numeric)*
+* tBodyGyrostdZ-ave *(numeric)*
+* tBodyGyroJerkmeanX-ave *(numeric)*
+* tBodyGyroJerkmeanY-ave *(numeric)*
+* tBodyGyroJerkmeanZ-ave *(numeric)*
+* tBodyGyroJerkstdX-ave *(numeric)*
+* tBodyGyroJerkstdY-ave *(numeric)*
+* tBodyGyroJerkstdZ-ave *(numeric)*
+* tBodyAccMagmean-ave *(numeric)*
+* tBodyAccMagstd-ave *(numeric)*
+* tGravityAccMagmean-ave *(numeric)*
+* tGravityAccMagstd-ave *(numeric)*
+* tBodyAccJerkMagmean-ave *(numeric)*
+* tBodyAccJerkMagstd-ave *(numeric)*
+* tBodyGyroMagmean-ave *(numeric)*
+* tBodyGyroMagstd-ave *(numeric)*
+* tBodyGyroJerkMagmean-ave *(numeric)*
+* tBodyGyroJerkMagstd-ave *(numeric)*
+* fBodyAccmeanX-ave *(numeric)*
+* fBodyAccmeanY-ave *(numeric)*
+* fBodyAccmeanZ-ave *(numeric)*
+* fBodyAccstdX-ave *(numeric)*
+* fBodyAccstdY-ave *(numeric)*
+* fBodyAccstdZ-ave *(numeric)*
+* fBodyAccmeanFreqX-ave *(numeric)*
+* fBodyAccmeanFreqY-ave *(numeric)*
+* fBodyAccmeanFreqZ-ave *(numeric)*
+* fBodyAccJerkmeanX-ave *(numeric)*
+* fBodyAccJerkmeanY-ave *(numeric)*
+* fBodyAccJerkmeanZ-ave *(numeric)*
+* fBodyAccJerkstdX-ave *(numeric)*
+* fBodyAccJerkstdY-ave *(numeric)*
+* fBodyAccJerkstdZ-ave *(numeric)*
+* fBodyAccJerkmeanFreqX-ave *(numeric)*
+* fBodyAccJerkmeanFreqY-ave *(numeric)*
+* fBodyAccJerkmeanFreqZ-ave *(numeric)*
+* fBodyGyromeanX-ave *(numeric)*
+* fBodyGyromeanY-ave *(numeric)*
+* fBodyGyromeanZ-ave *(numeric)*
+* fBodyGyrostdX-ave *(numeric)*
+* fBodyGyrostdY-ave *(numeric)*
+* fBodyGyrostdZ-ave *(numeric)*
+* fBodyGyromeanFreqX-ave *(numeric)*
+* fBodyGyromeanFreqY-ave *(numeric)*
+* fBodyGyromeanFreqZ-ave *(numeric)*
+* fBodyAccMagmean-ave *(numeric)*
+* fBodyAccMagstd-ave *(numeric)*
+* fBodyAccMagmeanFreq-ave *(numeric)*
+* fBodyBodyAccJerkMagmean-ave *(numeric)*
+* fBodyBodyAccJerkMagstd-ave *(numeric)*
+* fBodyBodyAccJerkMagmeanFreq-ave *(numeric)*
+* fBodyBodyGyroMagmean-ave *(numeric)*
+* fBodyBodyGyroMagstd-ave *(numeric)*
+* fBodyBodyGyroMagmeanFreq-ave *(numeric)*
+* fBodyBodyGyroJerkMagmean-ave *(numeric)*
+* fBodyBodyGyroJerkMagstd-ave *(numeric)*
+* fBodyBodyGyroJerkMagmeanFreq-ave *(numeric)*
+
+
 
 
 # Transformation
