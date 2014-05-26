@@ -69,4 +69,6 @@ dfStep5 <- dfStep5[, lapply(.SD, mean), by = c("activity", "subject")]
 columnNamesStep5 <- c("activity", "subject", sapply(dfFeatureNamesStep2$name, function(colname) paste(colname, "ave", sep="-")))
 setnames(dfStep5, colnames(dfStep5), columnNamesStep5)
 
+lapply(columnNamesStep5, function(n) cat("* ", n, "(numeric)", '\n', sep=""))
+
 write.table(dfStep5, file="tidy_data.csv", sep="\t", quote= F, row.names= F)

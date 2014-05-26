@@ -48,3 +48,4 @@ The fifth steps groups the observations by *activity* and *subject* and calculat
 
 ## Results
 The resulting tidy data set gets saved as tidy_data.csv with a tab as delimiter.
+
