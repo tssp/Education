@@ -116,4 +116,10 @@ sampleTimes = index(amzn)
 # amzn[(index(amzn) >= as.Date("2012-01-01") & index(amzn) <= as.Date("2012-12-24")), ]
 
 # Short-form:
-amzn["2012"]
+amzn <- amzn["2012"]
+result1 <- nrow(amzn)
+
+amzn <- amzn[as.POSIXlt(index(amzn))$wday == 01]
+result2 <- nrow(amzn)
+
+cat("Question 5:", result1, ",", result2, "\n")
