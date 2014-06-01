@@ -246,7 +246,7 @@ object Huffman {
     def find(c:Char, t:CodeTree, acc:List[Bit]):List[Bit] = t match {
 
       case l:Leaf => if(c == l.char) acc else List()
-      case f:Fork => find(c, f.left, 0::acc) ::: find(c, f.right, 1::acc)
+      case f:Fork => println("FIND: "+acc); find(c, f.left, acc:::List(0)) ::: find(c, f.right, acc:::List(1))
     }
 
     text match {
