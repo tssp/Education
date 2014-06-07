@@ -5,3 +5,6 @@
 .*
 target
 UCI HAR Dataset
+lib_managed
+Data-Science/Getting-and-Cleaning-Data/course-project/tidy_data.csv
+Data-Science/Exploratory-Data-Analysis/course-project-1/household_power_consumption.txt
