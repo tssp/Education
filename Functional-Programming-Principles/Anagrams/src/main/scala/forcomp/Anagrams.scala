@@ -56,7 +56,7 @@ object Anagrams {
    *
    */
   lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = dictionary.groupBy( w => wordOccurrences(w))
-
+  
   /** Returns all the anagrams of a given word. */
   def wordAnagrams(word: Word): List[Word] = dictionaryByOccurrences.getOrElse(wordOccurrences(word), Nil)
 
@@ -118,7 +118,15 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(x: Occurrences, y: Occurrences): Occurrences = x.map { o =>  
+
+    y.find{ o._1 == _._1 } match {
+
+      case Some(r) => (o._1, o._2-r._2)
+      case _ => o
+    }
+  
+  }.filter{ o => o._2 > 0}
 
   /** Returns a list of all anagram sentences of the given sentence.
    *  
@@ -160,6 +168,54 @@ object Anagrams {
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+
+    // type Word = String
+    // type Occurrences = List[(Char, Int)]
+    // type Sentence = List[Word]
+
+
+    type Sentences = List[Sentence]
+
+    def findAnagrams(occurrences:Occurrences, acc:Sentence):Sentences = occurrences match {
+
+      case x::xs => findValidWordCombinations(combinations(occurrences)) match {
+
+          case Some(combinations) => {
+
+              val sentences= for{combination <- combinations
+                  remaining= subtract(occurrences, combination) 
+                  words= dictionaryByOccurrences(combination)
+                  word <- words} 
+              yield { findAnagrams(remaining, acc:+word) }
+
+              sentences.flatMap{ sx => sx }.filterNot { _.isEmpty }
+            }
+
+          case None => Nil
+        }
+      case _ => List(acc)
+    }
+
+    sentence match {
+
+      case x::xs => findAnagrams(sentenceOccurrences(sentence), Nil)
+      case _ => List(List())
+    } 
+  }
+
+  /**
+    * Some helper functions to reduce cyclomatic complexity
+    */
+  def listToOption[T](l:List[T]):Option[List[T]] = if(l.isEmpty) None else Some(l)
+
+  def findValidWordCombinations(combinations:List[Occurrences]):Option[List[Occurrences]] = combinations match {
+
+    case c::cs => listToOption(combinations.filterNot { dictionaryByOccurrences.get(_).isEmpty })
+    case _ => None
+  }
+
 
 }
+
+
