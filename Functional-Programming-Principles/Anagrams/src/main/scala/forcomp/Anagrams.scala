@@ -37,7 +37,7 @@ object Anagrams {
 
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.reduce(_+_))
+  def sentenceOccurrences(s: Sentence): Occurrences = if(s.isEmpty) Nil else wordOccurrences(s.reduce(_+_))
 
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
@@ -197,11 +197,7 @@ object Anagrams {
       case _ => List(acc)
     }
 
-    sentence match {
-
-      case x::xs => findAnagrams(sentenceOccurrences(sentence), Nil)
-      case _ => List(List())
-    } 
+    findAnagrams(sentenceOccurrences(sentence), Nil) 
   }
 
   /**
