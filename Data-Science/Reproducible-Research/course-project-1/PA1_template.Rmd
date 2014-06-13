@@ -29,6 +29,8 @@ There are no additional transformation at this point to the data.
 
 For this part of the assignment, the missing values in the dataset can be ignored.
 
+### Histogram
+
 Make a histogram of the total number of steps taken each day:
 
 ```{r, echo=TRUE}
@@ -37,6 +39,26 @@ dfAggregate <- aggregate(steps ~ date, sum, data= dfSteps)
 
 hist(dfAggregate$steps, breaks=15, main= "Histogram", xlab= "Steps")
 ```
+
+Calculate and report the mean and median total number of steps taken per day.
+
+### The mean values per day: 
+
+```{r showtable, echo=TRUE, results='asis'}
+library(xtable)
+xt <- xtable(aggregate(steps ~ date, mean, data= dfSteps))
+print(xt, type='html')
+```
+
+### The average values per day: 
+
+```{r, echo=TRUE, results='asis'}
+xt <- xtable(aggregate(steps ~ date, mean, data= dfSteps))
+print(xt, type='html')
+```
+
+
+
 
 
 ## What is the average daily activity pattern?
