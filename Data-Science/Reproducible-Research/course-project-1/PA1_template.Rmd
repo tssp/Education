@@ -20,9 +20,16 @@ of 17,568 observations in this dataset.
 
 The data is loaded into a *data.frame* object via the *read.csv* function:
 ```{r, echo=TRUE}
-df <- read.csv('activity.csv')
+library(data.table)
+dt <- fread('activity.csv')
 ```
-There are no additional transformation at this point to the data.
+
+Remove obsolete interval column: 
+
+```{r, echo=TRUE}
+dt <- dt[, c("interval"):=NULL]
+```
+
 
 
 ## What is mean total number of steps taken per day?
@@ -34,36 +41,98 @@ For this part of the assignment, the missing values in the dataset can be ignore
 Make a histogram of the total number of steps taken each day:
 
 ```{r, echo=TRUE}
-dfSteps <- df[!is.na(df$steps) & !is.na(df$date) & !is.na(df$steps), ]
-dfAggregate <- aggregate(steps ~ date, sum, data= dfSteps)
+dtSteps <- dt[!is.na(dt$steps) & !is.na(dt$date), ]
 
-hist(dfAggregate$steps, breaks=15, main= "Histogram", xlab= "Steps")
+
+dtAggregate <- aggregate(steps ~ date, data= dtSteps, sum)
+
+hist(dtAggregate$steps, breaks=15, main= "Histogram", xlab= "Steps")
 ```
 
 Calculate and report the mean and median total number of steps taken per day.
 
 ### The mean values per day: 
 
-```{r showtable, echo=TRUE, results='asis'}
+```{r, echo=TRUE, results='asis'}
 library(xtable)
-xt <- xtable(aggregate(steps ~ date, mean, data= dfSteps))
+
+meanSteps <- dtSteps[, lapply(.SD, mean), by = c("date")]
+setnames(meanSteps, c("Date", "Mean number of steps"))
+
+xt <- xtable(meanSteps)
 print(xt, type='html')
 ```
 
-### The average values per day: 
+### The median values per day: 
 
 ```{r, echo=TRUE, results='asis'}
-xt <- xtable(aggregate(steps ~ date, mean, data= dfSteps))
+medianSteps <- dtSteps[, lapply(.SD, median), by = c("date")]
+
+setnames(medianSteps, c("Date", "Median number of steps"))
+xt <- xtable(medianSteps)
 print(xt, type='html')
 ```
-
-
-
 
 
 ## What is the average daily activity pattern?
 
+```{r, echo=TRUE}
+library(ggplot2)
+
+# TODO!!
+#ggplot(meanSteps, aes(x= date, y= steps)) + geom_line() + xlab("Date") + ylab("Average Steps")
+
+```
+
+
 ## Imputing missing values
+
+```{r, echo=TRUE}
+dtMissing <- dt[is.na(dt$steps) | is.na(dt$date) | is.na(dt$interval), ]
+```
+
+There are `r nrow(dtMissing)` records with missing values in the dataset.
+
+The following strategy will be used to impute the missing values: simply use the
+mean steps over all records in the dataset:
+
+```{r, echo=TRUE}
+m <- mean(dtSteps$steps)
+dtNonMissing <- dt
+dtNonMissing[is.na(dtNonMissing$steps) | is.na(dtNonMissing$date), c("steps")] <- as.integer(m)
+```
+
+The new histogram of the total number of steps taken each day:
+
+```{r, echo=TRUE}
+dtNonMissingAggregate <- aggregate(steps ~ date, data= dtNonMissing, sum)
+
+hist(dtNonMissingAggregate$steps, breaks=15, main= "Histogram (imputed values)", xlab= "Steps")
+```
+
+### The mean values per day  (imputed values): 
+
+```{r, echo=TRUE, results='asis'}
+library(xtable)
+
+meanStepsImput <- dtNonMissing[, lapply(.SD, mean), by = c("date")]
+setnames(meanStepsImput, c("Date", "Mean number of steps"))
+
+xt <- xtable(meanStepsImput)
+print(xt, type='html')
+```
+
+### The median values per day (imputed values): 
+
+```{r, echo=TRUE, results='asis'}
+medianStepsImputed <- dtNonMissing[, lapply(.SD, median), by = c("date")]
+
+setnames(medianStepsImputed, c("Date", "Median number of steps"))
+
+xt <- xtable(medianStepsImputed)
+print(xt, type='html')
+```
+
 
 
 
