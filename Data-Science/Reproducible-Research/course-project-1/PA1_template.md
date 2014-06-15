@@ -73,7 +73,7 @@ print(xt, type='html')
 ```
 
 <!-- html table generated in R 3.0.3 by xtable 1.7-3 package -->
-<!-- Sun Jun 15 14:49:36 2014 -->
+<!-- Sun Jun 15 14:57:09 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> Date </TH> <TH> Mean number of steps </TH>  </TR>
   <TR> <TD align="right"> 1 </TD> <TD> 2012-10-02 </TD> <TD align="right"> 0.44 </TD> </TR>
@@ -143,7 +143,7 @@ print(xt, type='html')
 ```
 
 <!-- html table generated in R 3.0.3 by xtable 1.7-3 package -->
-<!-- Sun Jun 15 14:49:36 2014 -->
+<!-- Sun Jun 15 14:57:09 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> Date </TH> <TH> Median number of steps </TH>  </TR>
   <TR> <TD align="right"> 1 </TD> <TD> 2012-10-02 </TD> <TD align="right"> 0.00 </TD> </TR>
@@ -218,6 +218,9 @@ xyplot(dtActivity$steps ~ dtActivity$interval, type='l', xlab='Interval', ylab='
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
 
+The 5-minute interval with the maximum numbers of steps is at interval 1705.
+
+
 
 ## Imputing missing values
 
@@ -264,7 +267,7 @@ print(xt, type='html')
 ```
 
 <!-- html table generated in R 3.0.3 by xtable 1.7-3 package -->
-<!-- Sun Jun 15 14:49:36 2014 -->
+<!-- Sun Jun 15 14:57:10 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> Date </TH> <TH> Mean number of steps </TH>  </TR>
   <TR> <TD align="right"> 1 </TD> <TD> 2012-10-01 </TD> <TD align="right"> 37.00 </TD> </TR>
@@ -343,7 +346,7 @@ print(xt, type='html')
 ```
 
 <!-- html table generated in R 3.0.3 by xtable 1.7-3 package -->
-<!-- Sun Jun 15 14:49:36 2014 -->
+<!-- Sun Jun 15 14:57:10 2014 -->
 <TABLE border=1>
 <TR> <TH>  </TH> <TH> Date </TH> <TH> Median number of steps </TH>  </TR>
   <TR> <TD align="right"> 1 </TD> <TD> 2012-10-01 </TD> <TD align="right"> 37.00 </TD> </TR>

@@ -86,6 +86,9 @@ dtActivity <- dtActivity[, lapply(.SD, mean), by = c("interval")]
 xyplot(dtActivity$steps ~ dtActivity$interval, type='l', xlab='Interval', ylab='Number of steps')
 ```
 
+The 5-minute interval with the maximum numbers of steps is at interval `r dtActivity[max(dtActivity$steps), ]$interval`.
+
+
 
 ## Imputing missing values
 
