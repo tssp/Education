@@ -71,11 +71,14 @@ print(xt, type='html')
 ## What is the average daily activity pattern?
 
 ```{r, echo=TRUE}
-library(ggplot2)
+library(lattice)
 
-# TODO!!
-#ggplot(meanSteps, aes(x= date, y= steps)) + geom_line() + xlab("Date") + ylab("Average Steps")
+dtActivity <- dtSteps
+dtActivity <- dtActivity[, c("date"):=NULL]
 
+dtActivity <- dtActivity[, lapply(.SD, mean), by = c("interval")]
+
+xyplot(dtActivity$steps ~ dtActivity$interval, type='l', xlab='Interval', ylab='Number of steps')
 ```
 
 
