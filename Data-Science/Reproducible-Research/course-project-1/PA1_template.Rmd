@@ -24,13 +24,6 @@ library(data.table)
 dt <- fread('activity.csv')
 ```
 
-Remove obsolete interval column: 
-
-```{r, echo=TRUE}
-dt <- dt[, c("interval"):=NULL]
-```
-
-
 
 ## What is mean total number of steps taken per day?
 
@@ -57,6 +50,7 @@ Calculate and report the mean and median total number of steps taken per day.
 library(xtable)
 
 meanSteps <- dtSteps[, lapply(.SD, mean), by = c("date")]
+meanSteps <- meanSteps[, c("interval"):=NULL]
 setnames(meanSteps, c("Date", "Mean number of steps"))
 
 xt <- xtable(meanSteps)
@@ -67,7 +61,7 @@ print(xt, type='html')
 
 ```{r, echo=TRUE, results='asis'}
 medianSteps <- dtSteps[, lapply(.SD, median), by = c("date")]
-
+medianSteps <- medianSteps[, c("interval"):=NULL]
 setnames(medianSteps, c("Date", "Median number of steps"))
 xt <- xtable(medianSteps)
 print(xt, type='html')
@@ -115,10 +109,11 @@ hist(dtNonMissingAggregate$steps, breaks=15, main= "Histogram (imputed values)",
 ```{r, echo=TRUE, results='asis'}
 library(xtable)
 
-meanStepsImput <- dtNonMissing[, lapply(.SD, mean), by = c("date")]
-setnames(meanStepsImput, c("Date", "Mean number of steps"))
+meanStepsImputed <- dtNonMissing[, lapply(.SD, mean), by = c("date")]
+meanStepsImputed <- meanStepsImputed[, c("interval"):=NULL]
+setnames(meanStepsImputed, c("Date", "Mean number of steps"))
 
-xt <- xtable(meanStepsImput)
+xt <- xtable(meanStepsImputed)
 print(xt, type='html')
 ```
 
@@ -126,14 +121,38 @@ print(xt, type='html')
 
 ```{r, echo=TRUE, results='asis'}
 medianStepsImputed <- dtNonMissing[, lapply(.SD, median), by = c("date")]
-
+medianStepsImputed <- medianStepsImputed[, c("interval"):=NULL]
 setnames(medianStepsImputed, c("Date", "Median number of steps"))
 
 xt <- xtable(medianStepsImputed)
 print(xt, type='html')
 ```
 
+### Differences
 
+Using the imputed values has an impact: 
 
+* The mean number of steps decreased from
+`r mean(meanSteps[["Mean number of steps"]])` to `r mean(meanStepsImputed[["Mean number of steps"]])` steps with missing values in the dataset. 
+* The mean number of steps increased from
+`r mean(medianSteps[["Median number of steps"]])` to `r mean(medianStepsImputed[["Median number of steps"]])` steps with missing values in the dataset. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+Yes, there are differences. There is much more activity on the weekend:
+
+```{r, echo=TRUE}
+library(lattice)
+
+
+we <- function(d) if(d %in% c("Sunday","Saturday")) { return( "weekend") } else {return ("weekday")}
+
+dt <- dtNonMissing[, wd:= as.factor(weekdays(as.Date(dtNonMissing$date, format="%Y-%m-%d"))) ]
+dt <- dtNonMissing[, we:= as.factor(sapply(dtNonMissing$wd, we))]
+dt <- dt[, c("date", "wd"):=NULL]
+
+ms <- dt[, lapply(.SD, mean), by = c("interval", "we")]
+
+xyplot(ms$steps ~ ms$interval | ms$we, layout= c(1,2), type='l', xlab='Interval', ylab='Number of steps')
+```
