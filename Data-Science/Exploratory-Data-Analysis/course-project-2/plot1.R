@@ -11,11 +11,9 @@ data <- data[, lapply(.SD, sum), by = c("year")]
 data$Emissions= data$Emissions / 1000
 
 # Plot the graph and save it on disk
-library(ggplot2)
-
 png(file="plot1.png", width= 1024, height= 1024)
-qplot(year, Emissions, data= data, geom= "line") + 
-  labs(title="Total Emissions USA") + 
-  labs(y = expression(PM[2.5] * " in kilo tons"), x = "Year")
+plot(data$year, data$Emissions, type="l", xlab= "Year", ylab= expression(PM[2.5] * " kilo in tons"))
+title("Total Emissions USA")
+
 dev.off()
 
