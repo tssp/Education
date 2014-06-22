@@ -14,7 +14,7 @@ data$type = as.factor(data$type)
 # Plot the graph and save it on disk
 library(ggplot2)
 
-png(file="plot3.png", width= 480, height= 480)
+png(file="plot3.png", width= 1024, height= 1024)
 qplot(year, Emissions, data= data, geom= "line", color= type) + 
   labs(title="Emissions by type in Baltimore City, USA") + 
   labs(y = expression(PM[2.5] * " in tons"), x = "Year")
