@@ -64,12 +64,7 @@ trait Solver extends GameDef {
   def from(initial: Stream[(Block, List[Move])],
            explored: Set[Block]): Stream[(Block, List[Move])] = initial match {
 
-    case (block, history)#::xs => {
-      val more= newNeighborsOnly(neighborsWithHistory(block,history), explored)
-      val next= (block,history) #:: from(xs ++ more, explored + block)
-      
-      next
-    }
+    case (block, history)#::xs => (block,history)#::from(xs ++ newNeighborsOnly(neighborsWithHistory(block,history), explored), explored + block)
     case _ => Stream.empty
   }
 /*
