@@ -67,14 +67,6 @@ trait Solver extends GameDef {
     case (block, history)#::xs => (block,history)#::from(xs ++ newNeighborsOnly(neighborsWithHistory(block,history), explored), explored + block)
     case _ => Stream.empty
   }
-/*
-    val neighbors= initial.flatMap( t => neighborsWithHistory(t._1, t._2))
-    val newNeighbors= newNeighborsOnly(neighbors, explored)
-    
-    val more= newNeighbors
-    
-    initial.append(from(more, explored ++ (more map( t => t._1) )))
-  }*/
 
   /**
    * The stream of all paths that begin at the starting block.
@@ -85,7 +77,7 @@ trait Solver extends GameDef {
    * Returns a stream of all possible pairs of the goal block along
    * with the history how it was reached.
    */
-  lazy val pathsToGoal: Stream[(Block, List[Move])] = pathsFromStart.filter( p => done(p._1)) //from(pathsFromStart, Set(startBlock))
+  lazy val pathsToGoal: Stream[(Block, List[Move])] = pathsFromStart.filter( p => done(p._1))
 
   /**
    * The (or one of the) shortest sequence(s) of moves to reach the
