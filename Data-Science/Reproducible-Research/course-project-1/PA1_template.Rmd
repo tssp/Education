@@ -32,12 +32,17 @@ Sys.setlocale("LC_TIME", "English")
 ```
 
 
-The data is loaded into a *data.table* object via the *read.csv* function:
+The data is loaded into a *data.table* object via the *fread* function:
 ```{r, echo=TRUE}
 dt <- fread('activity.csv')
-dt$date = as.Date(dt$date, format="%Y-%m-%d")
 ```
 
+The *date* variable comes as a character type. For the sake of correctness it
+should be converted to the proper date type:
+
+```{r, echo=TRUE}
+dt$date = as.Date(dt$date, format="%Y-%m-%d")
+```
 
 ## What is mean total number of steps taken per day?
 
@@ -49,115 +54,129 @@ Make a histogram of the total number of steps taken each day:
 
 ```{r, echo=TRUE}
 # Filter NA values
-dtSteps <- dt[!is.na(dt$steps) & !is.na(dt$date), ]
+dtNonNA <- dt[!is.na(dt$steps), ]
 
 # Summarize steps for each day
-dtAggregate <- aggregate(steps ~ date, data= dtSteps, sum)
+dtStepsPerDay <- aggregate(steps ~ date, data= dtNonNA, sum)
 
 # Plot histogram
-qplot(steps, data=dtAggregate, binwidth = 300)+labs(title="Total number of steps", x="Number of Steps", y="Number of Days")
+qplot(steps, data=dtStepsPerDay, binwidth = 300)+
+  labs(title="Total number of steps", x="Number of Steps", y="Number of Days")
 ```
 
 Calculate and report the mean and median total number of steps taken per day.
 
 ### The mean values per day: 
 
-```{r, echo=TRUE, results='asis'}
-library(xtable)
-
-meanSteps <- dtSteps[, lapply(.SD, mean), by = c("date")]
-meanSteps <- meanSteps[, c("interval"):=NULL]
-setnames(meanSteps, c("Date", "Mean number of steps"))
-
-xt <- xtable(meanSteps)
-print(xt, type='html')
+```{r, echo=TRUE}
+# Simply calculate the mean 
+meanSteps <- mean(dtStepsPerDay$steps)
 ```
+
+The users made `r meanSteps` steps each day in average.
+
 
 ### The median values per day: 
 
-```{r, echo=TRUE, results='asis'}
-medianSteps <- dtSteps[, lapply(.SD, median), by = c("date")]
-medianSteps <- medianSteps[, c("interval"):=NULL]
-setnames(medianSteps, c("Date", "Median number of steps"))
-xt <- xtable(medianSteps)
-print(xt, type='html')
+```{r, echo=TRUE}
+# Simply calculate the median 
+medianSteps <- median(dtStepsPerDay$steps)
 ```
+
+
+The users made `r medianSteps` steps each day in average.
 
 
 ## What is the average daily activity pattern?
 
 ```{r, echo=TRUE}
-library(lattice)
-
-dtActivity <- dtSteps
+dtActivity <- copy(dtNonNA)
 dtActivity <- dtActivity[, c("date"):=NULL]
 
 dtActivity <- dtActivity[, lapply(.SD, mean), by = c("interval")]
 
-xyplot(dtActivity$steps ~ dtActivity$interval, type='l', xlab='Interval', ylab='Number of steps')
+# Plot histogram
+qplot(interval, steps, data=dtActivity, geom= "line")+
+  labs(title="Average Daily Activity Pattern", x="Interval", y="Steps")
 ```
 
-The 5-minute interval with the maximum numbers of steps is at interval `r dtActivity[max(dtActivity$steps), ]$interval`.
-
+The 5-minute interval with the maximum numbers of steps is at interval `r dtActivity[dtActivity$steps == max(dtActivity$steps), ]$interval`.
 
 
 ## Imputing missing values
 
-```{r, echo=TRUE}
-dtMissing <- dt[is.na(dt$steps) | is.na(dt$date) | is.na(dt$interval), ]
-```
 
-There are `r nrow(dtMissing)` records with missing values in the dataset.
+There are `r nrow(dt[is.na(dt$steps), ])` records with missing values in the dataset.
 
 The following strategy will be used to impute the missing values: simply use the
-mean steps over all records in the dataset:
+median steps for each interval.
 
 ```{r, echo=TRUE}
-m <- mean(dtSteps$steps)
-dtNonMissing <- dt
-dtNonMissing[is.na(dtNonMissing$steps) | is.na(dtNonMissing$date), c("steps")] <- as.integer(m)
+impute <- function(int) {
+  
+  a <- dtActivity[dtActivity$interval == int, steps]
+  
+  if(length(a) == 0) { return (0) }
+  else { return (a) }
+}
+
+dt[is.na(dt$steps), steps := as.integer(impute(interval)) ]
 ```
 
 The new histogram of the total number of steps taken each day:
 
 ```{r, echo=TRUE}
-dtNonMissingAggregate <- aggregate(steps ~ date, data= dtNonMissing, sum)
+# Summarize steps for each day
+dtStepsPerDayImputed <- aggregate(steps ~ date, data= dt, sum)
 
-hist(dtNonMissingAggregate$steps, breaks=15, main= "Histogram (imputed values)", xlab= "Steps")
+# Plot histogram
+qplot(steps, data=dtStepsPerDayImputed, binwidth = 300)+
+  labs(title="Total number of steps (imputed)", x="Number of Steps", y="Number of Days")
+
 ```
 
-### The mean values per day  (imputed values): 
+### The mean values per day (imputed values): 
 
-```{r, echo=TRUE, results='asis'}
-library(xtable)
-
-meanStepsImputed <- dtNonMissing[, lapply(.SD, mean), by = c("date")]
-meanStepsImputed <- meanStepsImputed[, c("interval"):=NULL]
-setnames(meanStepsImputed, c("Date", "Mean number of steps"))
-
-xt <- xtable(meanStepsImputed)
-print(xt, type='html')
+```{r, echo=TRUE}
+# Simply calculate the mean 
+meanStepsImputed <- mean(dtStepsPerDayImputed$steps)
 ```
+
+The users made `r meanStepsImputed` steps each day in average after imputing missing values.
 
 ### The median values per day (imputed values): 
 
-```{r, echo=TRUE, results='asis'}
-medianStepsImputed <- dtNonMissing[, lapply(.SD, median), by = c("date")]
-medianStepsImputed <- medianStepsImputed[, c("interval"):=NULL]
-setnames(medianStepsImputed, c("Date", "Median number of steps"))
-
-xt <- xtable(medianStepsImputed)
-print(xt, type='html')
+```{r, echo=TRUE}
+# Simply calculate the median 
+medianStepsImputed <- median(dtStepsPerDayImputed$steps)
 ```
+
+
+The users made `r medianStepsImputed` steps each day in average after imputing missing values.
+
+
 
 ### Differences
 
 Using the imputed values has an impact: 
 
 * The mean number of steps decreased from
-`r mean(meanSteps[["Mean number of steps"]])` to `r mean(meanStepsImputed[["Mean number of steps"]])` steps with missing values in the dataset. 
+`r meanSteps` to `r meanStepsImputed` steps with missing values in the dataset. 
 * The mean number of steps increased from
-`r mean(medianSteps[["Median number of steps"]])` to `r mean(medianStepsImputed[["Median number of steps"]])` steps with missing values in the dataset. 
+`r medianSteps` to `r medianStepsImputed` steps with missing values in the dataset. 
+
+This can be more simply demonstrated as a graph:
+
+```{r, echo=TRUE}
+dtActivityImputed <- copy(dt)
+dtActivityImputed <- dtActivityImputed[, c("date"):=NULL]
+dtActivityImputed <- dtActivityImputed[, lapply(.SD, mean), by = c("interval")]
+
+# Plot histogram
+qplot(interval, steps, data=dtActivityImputed, geom= "line")+
+  labs(title="Average Daily Activity Pattern", x="Interval", y="Steps")
+```
+
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
