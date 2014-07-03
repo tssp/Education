@@ -1,7 +1,7 @@
 
 # Reproducible Research: Peer Assessment 1
 
-It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about thedtWeekelves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
 
 This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
@@ -32,9 +32,9 @@ Sys.setlocale("LC_TIME", "English")
 ```
 
 
-The data is loaded into a *data.table* object via the *fread* function:
+The data is loaded into a *data.frame* object via the *read.csv* function:
 ```{r, echo=TRUE}
-dt <- fread('activity.csv')
+dt <- read.csv('activity.csv')
 ```
 
 The *date* variable comes as a character type. For the sake of correctness it
@@ -90,10 +90,8 @@ The users made `r medianSteps` steps each day in average.
 ## What is the average daily activity pattern?
 
 ```{r, echo=TRUE}
-dtActivity <- copy(dtNonNA)
-dtActivity <- dtActivity[, c("date"):=NULL]
-
-dtActivity <- dtActivity[, lapply(.SD, mean), by = c("interval")]
+dtActivity <- dtNonNA[, c("steps", "interval")]
+dtActivity <- aggregate(steps ~ interval, data= dtActivity, mean)
 
 # Plot histogram
 qplot(interval, steps, data=dtActivity, geom= "line")+
@@ -114,13 +112,13 @@ median steps for each interval.
 ```{r, echo=TRUE}
 impute <- function(int) {
   
-  a <- dtActivity[dtActivity$interval == int, steps]
+  a <- dtActivity$steps[dtActivity$interval == int]
   
   if(length(a) == 0) { return (0) }
-  else { return (a) }
+  else { return (as.integer(a)) }
 }
 
-dt[is.na(dt$steps), steps := as.integer(impute(interval)) ]
+dt$steps[is.na(dt$steps)]  <- sapply(dt$interval[is.na(dt$steps)], impute) 
 ```
 
 The new histogram of the total number of steps taken each day:
@@ -160,23 +158,10 @@ The users made `r medianStepsImputed` steps each day in average after imputing m
 
 Using the imputed values has an impact: 
 
-* The mean number of steps decreased from
-`r meanSteps` to `r meanStepsImputed` steps with missing values in the dataset. 
 * The mean number of steps increased from
+`r meanSteps` to `r meanStepsImputed` steps with missing values in the dataset. 
+* The mean number of steps decreased from
 `r medianSteps` to `r medianStepsImputed` steps with missing values in the dataset. 
-
-This can be more simply demonstrated as a graph:
-
-```{r, echo=TRUE}
-dtActivityImputed <- copy(dt)
-dtActivityImputed <- dtActivityImputed[, c("date"):=NULL]
-dtActivityImputed <- dtActivityImputed[, lapply(.SD, mean), by = c("interval")]
-
-# Plot histogram
-qplot(interval, steps, data=dtActivityImputed, geom= "line")+
-  labs(title="Average Daily Activity Pattern", x="Interval", y="Steps")
-```
-
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -184,16 +169,19 @@ qplot(interval, steps, data=dtActivityImputed, geom= "line")+
 Yes, there are differences. There is much more activity on the weekend:
 
 ```{r, echo=TRUE}
-library(lattice)
+we <- function(d) if(d %in% c("Sunday","Saturday")) { return( "Weekend") } else {return ("Weekday")}
 
+dt$wd <- as.factor(weekdays(dt$date)) 
+dt$we <- as.factor(sapply(dt$wd, we))
 
-we <- function(d) if(d %in% c("Sunday","Saturday")) { return( "weekend") } else {return ("weekday")}
+dtWeek <- dt[, c("interval", "steps", "we")]
+dtWeek <- aggregate(dtWeek$steps, by=list(dtWeek$interval, dtWeek$we), mean)
+colnames(dtWeek) <- c("interval", "we", "steps")
 
-dt <- dtNonMissing[, wd:= as.factor(weekdays(as.Date(dtNonMissing$date, format="%Y-%m-%d"))) ]
-dt <- dtNonMissing[, we:= as.factor(sapply(dtNonMissing$wd, we))]
-dt <- dt[, c("date", "wd"):=NULL]
+# Plot histogram
+qplot(interval, steps, data=dtWeek, geom= "line", color= we, facets= .~we)+
+  stat_smooth(method="lm")+
+  theme(legend.title=element_blank())+
+  labs(title="Average Daily Activity Pattern by Weekend", x="Interval", y="Steps")
 
-ms <- dt[, lapply(.SD, mean), by = c("interval", "we")]
-
-xyplot(ms$steps ~ ms$interval | ms$we, layout= c(1,2), type='l', xlab='Interval', ylab='Number of steps')
 ```
