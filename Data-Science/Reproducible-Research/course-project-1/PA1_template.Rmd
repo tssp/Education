@@ -19,16 +19,25 @@ The variables included in this dataset are:
 The dataset is stored in a comma-separated-value (CSV) file and there are a total
 of 17,568 observations in this dataset. 
 
-The data is loaded into a *data.frame* object via the *read.csv* function:
+Load some libraries into the session scope:
 ```{r, echo=TRUE}
+library(ggplot2)
 library(data.table)
-dt <- fread('activity.csv')
 ```
+
 
 Settings system locale to ENGLISH 
 ```{r, echo=TRUE}
 Sys.setlocale("LC_TIME", "English")
 ```
+
+
+The data is loaded into a *data.table* object via the *read.csv* function:
+```{r, echo=TRUE}
+dt <- fread('activity.csv')
+dt$date = as.Date(dt$date, format="%Y-%m-%d")
+```
+
 
 ## What is mean total number of steps taken per day?
 
@@ -39,12 +48,14 @@ For this part of the assignment, the missing values in the dataset can be ignore
 Make a histogram of the total number of steps taken each day:
 
 ```{r, echo=TRUE}
+# Filter NA values
 dtSteps <- dt[!is.na(dt$steps) & !is.na(dt$date), ]
 
-
+# Summarize steps for each day
 dtAggregate <- aggregate(steps ~ date, data= dtSteps, sum)
 
-hist(dtAggregate$steps, breaks=15, main= "Histogram", xlab= "Steps")
+# Plot histogram
+qplot(steps, data=dtAggregate, binwidth = 300)+labs(title="Total number of steps", x="Number of Steps", y="Number of Days")
 ```
 
 Calculate and report the mean and median total number of steps taken per day.
