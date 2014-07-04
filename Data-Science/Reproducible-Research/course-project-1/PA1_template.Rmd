@@ -22,7 +22,6 @@ of 17,568 observations in this dataset.
 Load some libraries into the session scope:
 ```{r, echo=TRUE}
 library(ggplot2)
-library(data.table)
 ```
 
 
@@ -154,6 +153,7 @@ The users made `r medianStepsImputed` steps each day in average after imputing m
 
 
 
+
 ### Differences
 
 Using the imputed values has an impact: 
@@ -162,6 +162,24 @@ Using the imputed values has an impact:
 `r as.integer(meanSteps)` to `r as.integer(meanStepsImputed)` steps with missing values in the dataset. 
 * The mean number of steps decreased from
 `r medianSteps` to `r medianStepsImputed` steps with missing values in the dataset. 
+
+More visible as a diagram:
+
+```{r, echo=TRUE}
+# Prepare data
+dtStepsPerDay$type <- as.factor("Original")
+dtStepsPerDayImputed$type <- as.factor("Imputed")
+
+dtStepHisto <- rbind(dtStepsPerDay, dtStepsPerDayImputed)
+
+# Plot histogram
+ggplot(dtStepHisto, aes(steps, fill = type))+
+  theme(legend.title= element_blank())+
+  geom_bar(position= "dodge", binwidth= 400)+
+  labs(title="Comparision of total number of steps", x="Number of Steps", y="Number of Days")
+
+```
+
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
