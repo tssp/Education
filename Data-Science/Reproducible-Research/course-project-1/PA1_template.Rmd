@@ -1,7 +1,7 @@
 
 # Reproducible Research: Peer Assessment 1
 
-It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about thedtWeekelves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about thedtDayelves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
 
 This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
@@ -158,8 +158,8 @@ The users made `r medianStepsImputed` steps each day in average after imputing m
 
 Using the imputed values has an impact: 
 
-* The mean number of steps increased from
-`r meanSteps` to `r meanStepsImputed` steps with missing values in the dataset. 
+* The mean number of steps decreased from
+`r as.integer(meanSteps)` to `r as.integer(meanStepsImputed)` steps with missing values in the dataset. 
 * The mean number of steps decreased from
 `r medianSteps` to `r medianStepsImputed` steps with missing values in the dataset. 
 
@@ -169,19 +169,41 @@ Using the imputed values has an impact:
 Yes, there are differences. There is much more activity on the weekend:
 
 ```{r, echo=TRUE}
+# Mapping from day of week to either weekend or sunday
 we <- function(d) if(d %in% c("Sunday","Saturday")) { return( "Weekend") } else {return ("Weekday")}
 
+# Add day variable
 dt$wd <- as.factor(weekdays(dt$date)) 
 dt$we <- as.factor(sapply(dt$wd, we))
 
-dtWeek <- dt[, c("interval", "steps", "we")]
-dtWeek <- aggregate(dtWeek$steps, by=list(dtWeek$interval, dtWeek$we), mean)
-colnames(dtWeek) <- c("interval", "we", "steps")
+# Agggregate steps by interval and weekday
+dtDay <- dt[, c("interval", "steps", "we")]
+dtDay <- aggregate(dtDay$steps, by=list(dtDay$interval, dtDay$we), mean)
+colnames(dtDay) <- c("interval", "we", "steps")
 
-# Plot histogram
-qplot(interval, steps, data=dtWeek, geom= "line", color= we, facets= .~we)+
-  stat_smooth(method="lm")+
-  theme(legend.title=element_blank())+
-  labs(title="Average Daily Activity Pattern by Weekend", x="Interval", y="Steps")
+# Caluclate means
+dtWeekday <- dtDay[dtDay$we == "Weekday", ]
+dtWeekend <- dtDay[dtDay$we == "Weekend", ]
+
+dtWeekdayMean <- mean(dtWeekday$steps)
+dtWeekendMean <- mean(dtWeekend$steps)
+
+# Prepare mean values data frame
+dtMean <- data.frame(c(dtWeekdayMean, dtWeekendMean), as.factor(c("Weekday", "Weekend")))
+colnames(dtMean) <- c("mean", "we")
+
+# Prepare labels data frame
+dtLabel <- data.frame(c(150, 150), c(dtWeekdayMean+15, dtWeekendMean+15), 
+                      c(sprintf("%d steps", as.integer(dtWeekdayMean)), sprintf("%d steps", as.integer(dtWeekendMean))), 
+                      as.factor(c("Weekday", "Weekend")))
+colnames(dtLabel) <- c("x", "y", "lab", "we")
+
+# Plot faceted graph
+qplot(interval, steps, data=dtDay, geom= "line", color= we)+
+  geom_hline(data= dtMean, aes(yintercept= mean), linetype= 2)+
+  geom_text(data= dtLabel, aes(x, y, label=lab))+
+  theme(legend.position="none")+
+  facet_wrap(~ we, nrow=2)+
+  labs(title="Average Daily Activity Pattern by Day", x="Interval", y="Steps")
 
 ```
