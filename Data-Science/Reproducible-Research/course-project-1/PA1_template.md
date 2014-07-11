@@ -1,3 +1,10 @@
+---
+output:
+  html_document:
+    highlight: monochrome
+    theme: spacelab
+    toc: yes
+---
 
 # Reproducible Research: Peer Assessment 1
 
