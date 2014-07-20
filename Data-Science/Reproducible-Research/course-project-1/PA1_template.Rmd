@@ -26,17 +26,13 @@ The variables included in this dataset are:
 The dataset is stored in a comma-separated-value (CSV) file and there are a total
 of 17,568 observations in this dataset. 
 
-Load some libraries into the session scope:
-```{r, echo=TRUE}
+Load some libraries into the session scope and set system locale to ENGLISH:
+
+```{r ,echo=TRUE}
 library(ggplot2)
-```
 
-
-Settings system locale to ENGLISH 
-```{r, echo=TRUE}
 Sys.setlocale("LC_TIME", "English")
 ```
-
 
 The data is loaded into a *data.frame* object via the *read.csv* function:
 ```{r, echo=TRUE}
@@ -46,7 +42,7 @@ dt <- read.csv('activity.csv')
 The *date* variable comes as a character type. For the sake of correctness it
 should be converted to the proper date type:
 
-```{r, echo=TRUE}
+```{r "Prepare data", echo=TRUE}
 dt$date = as.Date(dt$date, format="%Y-%m-%d")
 ```
 
@@ -190,9 +186,6 @@ ggplot(dtStepHisto, aes(steps, fill = type))+
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-
-Yes, there are differences. There is much more activity on the weekend:
-
 ```{r, echo=TRUE}
 # Mapping from day of week to either weekend or sunday
 we <- function(d) if(d %in% c("Sunday","Saturday")) { return( "Weekend") } else {return ("Weekday")}
@@ -212,14 +205,21 @@ dtWeekend <- dtDay[dtDay$we == "Weekend", ]
 
 dtWeekdayMean <- mean(dtWeekday$steps)
 dtWeekendMean <- mean(dtWeekend$steps)
+```
 
+Yes, there are differences. There is much more activity on the weekend: The average
+activity during weekdays is `r dtWeekdayMean` steps a day, during the weekend
+it is `r dtWeekendMean` steps a day:
+
+```{r , echo=TRUE}
 # Prepare mean values data frame
 dtMean <- data.frame(c(dtWeekdayMean, dtWeekendMean), as.factor(c("Weekday", "Weekend")))
 colnames(dtMean) <- c("mean", "we")
 
 # Prepare labels data frame
 dtLabel <- data.frame(c(150, 150), c(dtWeekdayMean+15, dtWeekendMean+15), 
-                      c(sprintf("%d steps", as.integer(dtWeekdayMean)), sprintf("%d steps", as.integer(dtWeekendMean))), 
+                      c(sprintf("%d steps", as.integer(dtWeekdayMean)), 
+                        sprintf("%d steps", as.integer(dtWeekendMean))), 
                       as.factor(c("Weekday", "Weekend")))
 colnames(dtLabel) <- c("x", "y", "lab", "we")
 
@@ -230,5 +230,4 @@ qplot(interval, steps, data=dtDay, geom= "line", color= we)+
   theme(legend.position="none")+
   facet_wrap(~ we, nrow=2)+
   labs(title="Average Daily Activity Pattern by Day", x="Interval", y="Steps")
-
 ```

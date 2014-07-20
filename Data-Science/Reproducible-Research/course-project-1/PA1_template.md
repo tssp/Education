@@ -8,7 +8,7 @@ output:
 
 # Reproducible Research: Peer Assessment 1
 
-It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about thedtDayelves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
 
 This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
@@ -26,23 +26,18 @@ The variables included in this dataset are:
 The dataset is stored in a comma-separated-value (CSV) file and there are a total
 of 17,568 observations in this dataset. 
 
-Load some libraries into the session scope:
+Load some libraries into the session scope and set system locale to ENGLISH:
+
 
 ```r
 library(ggplot2)
-```
 
-
-Settings system locale to ENGLISH 
-
-```r
 Sys.setlocale("LC_TIME", "English")
 ```
 
 ```
 ## [1] "English_United States.1252"
 ```
-
 
 The data is loaded into a *data.frame* object via the *read.csv* function:
 
@@ -79,7 +74,7 @@ qplot(steps, data=dtStepsPerDay, binwidth = 300)+
   labs(title="Total number of steps", x="Number of Steps", y="Number of Days")
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
 
 Calculate and report the mean and median total number of steps taken per day.
 
@@ -118,7 +113,7 @@ qplot(interval, steps, data=dtActivity, geom= "line")+
   labs(title="Average Daily Activity Pattern", x="Interval", y="Steps")
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
 
 The 5-minute interval with the maximum numbers of steps is at interval 835.
 
@@ -156,7 +151,7 @@ qplot(steps, data=dtStepsPerDayImputed, binwidth = 300)+
   labs(title="Total number of steps (imputed)", x="Number of Steps", y="Number of Days")
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
 
 ### The mean values per day (imputed values): 
 
@@ -208,13 +203,10 @@ ggplot(dtStepHisto, aes(steps, fill = type))+
   labs(title="Comparision of total number of steps", x="Number of Steps", y="Number of Days")
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13.png) 
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11.png) 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-
-
-Yes, there are differences. There is much more activity on the weekend:
 
 
 ```r
@@ -236,14 +228,22 @@ dtWeekend <- dtDay[dtDay$we == "Weekend", ]
 
 dtWeekdayMean <- mean(dtWeekday$steps)
 dtWeekendMean <- mean(dtWeekend$steps)
+```
 
+Yes, there are differences. There is much more activity on the weekend: The average
+activity during weekdays is 35.5526 steps a day, during the weekend
+it is 42.3121 steps a day:
+
+
+```r
 # Prepare mean values data frame
 dtMean <- data.frame(c(dtWeekdayMean, dtWeekendMean), as.factor(c("Weekday", "Weekend")))
 colnames(dtMean) <- c("mean", "we")
 
 # Prepare labels data frame
 dtLabel <- data.frame(c(150, 150), c(dtWeekdayMean+15, dtWeekendMean+15), 
-                      c(sprintf("%d steps", as.integer(dtWeekdayMean)), sprintf("%d steps", as.integer(dtWeekendMean))), 
+                      c(sprintf("%d steps", as.integer(dtWeekdayMean)), 
+                        sprintf("%d steps", as.integer(dtWeekendMean))), 
                       as.factor(c("Weekday", "Weekend")))
 colnames(dtLabel) <- c("x", "y", "lab", "we")
 
@@ -256,4 +256,4 @@ qplot(interval, steps, data=dtDay, geom= "line", color= we)+
   labs(title="Average Daily Activity Pattern by Day", x="Interval", y="Steps")
 ```
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.png) 
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13.png) 
