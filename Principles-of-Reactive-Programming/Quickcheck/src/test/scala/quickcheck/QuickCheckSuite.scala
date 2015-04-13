@@ -35,7 +35,6 @@ class QuickCheckSuite extends FunSuite with ch.epfl.lamp.grading.GradingSuite wi
     checkBogus(new QuickCheckHeap with Bogus1BinomialHeap)
   }
 
-+
   test("Bogus (2) binomial heap does not satisfy properties.") {
     checkBogus(new QuickCheckHeap with Bogus2BinomialHeap)
   }
