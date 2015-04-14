@@ -46,6 +46,8 @@ object Lists {
         if(xxs.isEmpty) max
         else internalMax(xxs.tail, Math.max(xxs.head, max))
 
+      if(xs.isEmpty) throw new java.util.NoSuchElementException
+
       internalMax(xs.tail, xs.head)
     }
   }
