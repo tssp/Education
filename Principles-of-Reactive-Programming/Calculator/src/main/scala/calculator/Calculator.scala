@@ -19,7 +19,7 @@ object Calculator {
 
         val expr = expression()
 
-        eval(expr, namedExpressions)
+        evalNonCyclic(expr, namedExpressions, Nil)
       }
 
       (name, computation)
@@ -33,6 +33,17 @@ object Calculator {
     case Minus(a, b)  => eval(a, references) - eval(b, references)
     case Times(a, b)  => eval(a, references) * eval(b, references)
     case Divide(a, b) => eval(a, references) / eval(b, references)
+  }
+
+  def evalNonCyclic(expr: Expr, references: Map[String, Signal[Expr]], evaluatedNames: List[String]): Double = expr match {
+
+    case Literal(v)                                 => v
+    case Ref(name) if evaluatedNames.contains(name) => Double.NaN
+    case Ref(name)                                  => evalNonCyclic(getReferenceExpr(name, references), references, name :: evaluatedNames)
+    case Plus(a, b)                                 => evalNonCyclic(a, references, evaluatedNames) + evalNonCyclic(b, references, evaluatedNames)
+    case Minus(a, b)                                => evalNonCyclic(a, references, evaluatedNames) - evalNonCyclic(b, references, evaluatedNames)
+    case Times(a, b)                                => evalNonCyclic(a, references, evaluatedNames) * evalNonCyclic(b, references, evaluatedNames)
+    case Divide(a, b)                               => evalNonCyclic(a, references, evaluatedNames) / evalNonCyclic(b, references, evaluatedNames)
   }
 
   /**
