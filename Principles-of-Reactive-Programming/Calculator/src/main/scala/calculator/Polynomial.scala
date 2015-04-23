@@ -33,13 +33,16 @@ object Polynomial {
       val cc = c()
 
       if (dd < 0)
-        Set(0)
+        Set()
       else {
 
         val r1 = ((bb * -1) + Math.sqrt(dd)) / (2 * aa)
         val r2 = ((bb * -1) - Math.sqrt(dd)) / (2 * aa)
 
-        Set(r1, r2)
+        if (dd == 0)
+          Set(r1)
+        else
+          Set(r1, r2)
 
       }
 
