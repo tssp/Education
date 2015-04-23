@@ -14,12 +14,10 @@ object Calculator {
     case (name, expression) =>
 
       val computation = Var(0.0)
-      val expr = expression()
 
       computation() = {
 
-        //println("ComputeValues "+name)
-        //println("Expression    "+expr)
+        val expr = expression()
 
         eval(expr, namedExpressions)
       }
