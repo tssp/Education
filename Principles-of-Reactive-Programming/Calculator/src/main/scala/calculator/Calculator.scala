@@ -19,31 +19,26 @@ object Calculator {
 
         val expr = expression()
 
-        evalNonCyclic(expr, namedExpressions, Nil)
+        eval(expr, namedExpressions)
       }
 
       (name, computation)
   }
 
-  def eval(expr: Expr, references: Map[String, Signal[Expr]]): Double = expr match {
+  def eval(expr: Expr, references: Map[String, Signal[Expr]]): Double = {
 
-    case Literal(v)   => v
-    case Ref(name)    => eval(getReferenceExpr(name, references), references)
-    case Plus(a, b)   => eval(a, references) + eval(b, references)
-    case Minus(a, b)  => eval(a, references) - eval(b, references)
-    case Times(a, b)  => eval(a, references) * eval(b, references)
-    case Divide(a, b) => eval(a, references) / eval(b, references)
-  }
+    def nonCyclicEvaluation(ex: Expr, evaluated: List[String]): Double = ex match {
 
-  def evalNonCyclic(expr: Expr, references: Map[String, Signal[Expr]], evaluatedNames: List[String]): Double = expr match {
+      case Literal(v)                            => v
+      case Ref(name) if evaluated.contains(name) => Double.NaN
+      case Ref(name)                             => nonCyclicEvaluation(getReferenceExpr(name, references), name :: evaluated)
+      case Plus(a, b)                            => nonCyclicEvaluation(a, evaluated) + nonCyclicEvaluation(b, evaluated)
+      case Minus(a, b)                           => nonCyclicEvaluation(a, evaluated) - nonCyclicEvaluation(b, evaluated)
+      case Times(a, b)                           => nonCyclicEvaluation(a, evaluated) * nonCyclicEvaluation(b, evaluated)
+      case Divide(a, b)                          => nonCyclicEvaluation(a, evaluated) / nonCyclicEvaluation(b, evaluated)
+    }
 
-    case Literal(v)                                 => v
-    case Ref(name) if evaluatedNames.contains(name) => Double.NaN
-    case Ref(name)                                  => evalNonCyclic(getReferenceExpr(name, references), references, name :: evaluatedNames)
-    case Plus(a, b)                                 => evalNonCyclic(a, references, evaluatedNames) + evalNonCyclic(b, references, evaluatedNames)
-    case Minus(a, b)                                => evalNonCyclic(a, references, evaluatedNames) - evalNonCyclic(b, references, evaluatedNames)
-    case Times(a, b)                                => evalNonCyclic(a, references, evaluatedNames) * evalNonCyclic(b, references, evaluatedNames)
-    case Divide(a, b)                               => evalNonCyclic(a, references, evaluatedNames) / evalNonCyclic(b, references, evaluatedNames)
+    nonCyclicEvaluation(expr, Nil)
   }
 
   /**
