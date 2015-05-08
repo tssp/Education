@@ -1,12 +1,12 @@
 package nodescala
 
 import scala.language.postfixOps
-import scala.util.{Try, Success, Failure}
+import scala.util.{ Try, Success, Failure }
 import scala.collection._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.async.Async.{async, await}
+import scala.async.Async.{ async, await }
 import org.scalatest._
 import NodeScala._
 import org.junit.runner.RunWith
@@ -31,8 +31,12 @@ class NodeScalaSuite extends FunSuite {
     }
   }
 
-  
-  
+  test("A list of Futures should always have the same ordering when completed") {
+    val all = Future.all(List(3, 2, 1).map(value => Future { value }))
+
+    assert(Await.result(all, 5 seconds) == List(3, 2, 1))
+  }
+
   class DummyExchange(val request: Request) extends Exchange {
     @volatile var response = ""
     val loaded = Promise[String]()
