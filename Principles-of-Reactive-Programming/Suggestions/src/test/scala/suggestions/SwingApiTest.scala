@@ -87,5 +87,4 @@ class SwingApiTest extends FunSuite {
 
     assert(observed == Seq("T", "Tu", "Tur", "Turi", "Turin", "Turing"), observed)
   }
-
 }

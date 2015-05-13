@@ -60,7 +60,7 @@ trait WikipediaApi {
      * After `totalSec` seconds, if `obs` is not yet completed, the result observable becomes completed.
      * Note: uses the existing combinators on observables.
      */
-    def timedOut(totalSec: Long): Observable[T] = obs.dropRight(totalSec seconds)
+    def timedOut(totalSec: Long): Observable[T] =  obs.take(totalSec seconds)
 
     /**
      * Given a stream of events `obs` and a method `requestMethod` to map a request `T` into
@@ -88,8 +88,7 @@ trait WikipediaApi {
      *
      * Observable(Success(1), Succeess(1), Succeess(1), Succeess(2), Succeess(2), Succeess(2), Succeess(3), Succeess(3), Succeess(3))
      */
-    def concatRecovered[S](requestMethod: T => Observable[S]): Observable[Try[S]] = obs.flatMap { t => requestMethod(t) }.map { s => Success(s) }.onErrorReturn { e => Failure(e) }
-
+    def concatRecovered[S](requestMethod: T => Observable[S]): Observable[Try[S]] = obs.flatMap { t => requestMethod(t) }.recovered
   }
 
 }

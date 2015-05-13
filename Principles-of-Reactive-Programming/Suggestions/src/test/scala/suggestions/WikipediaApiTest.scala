@@ -10,15 +10,15 @@ import scala.util.{Try, Success, Failure}
 import rx.lang.scala._
 import org.scalatest._
 import gui._
-
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import rx.lang.scala.schedulers.IOScheduler
 
 
 @RunWith(classOf[JUnitRunner])
 class WikipediaApiTest extends FunSuite {
 
-  object mockApi extends WikipediaApi {
+    object mockApi extends WikipediaApi {
     def wikipediaSuggestion(term: String) = Future {
       if (term.head.isLetter) {
         for (suffix <- List(" (Computer Scientist)", " (Footballer)")) yield term + suffix
@@ -65,6 +65,14 @@ class WikipediaApiTest extends FunSuite {
       s => total = s
     }
     assert(total == (1 + 1 + 2 + 1 + 2 + 3), s"Sum: $total")
+  }
+
+  test("TimedOut should drop values after the timeout") {
+
+    val o = List(1, 2, 3, 4).toObservable.zip(Observable.interval(600 millis, IOScheduler())).map(_._1) // emit every 600 millis
+    val t = o.timedOut(2).toBlocking.toList
+
+    assert(List(1, 2, 3) == t)
   }
 
 }
