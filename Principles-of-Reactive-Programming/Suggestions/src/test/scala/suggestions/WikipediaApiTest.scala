@@ -67,6 +67,19 @@ class WikipediaApiTest extends FunSuite {
     assert(total == (1 + 1 + 2 + 1 + 2 + 3), s"Sum: $total")
   }
 
+  test("ConcatRecovered should recover correctly") {
+
+    val l1 = List(1, 2).toObservable.concatRecovered(num => List(num, num).toObservable).toBlocking.toList
+
+    assert(List(1, 1, 2, 2).map { Success(_) } == l1)
+
+    val ex = new Exception
+
+    val l2 = List(1, 2, 3).toObservable.concatRecovered(num => if (num == 2) Observable.error(ex) else Observable.just(num)).toBlocking.toList
+
+    assert(List(Success(1), Failure(ex), Success(3)) == l2)
+  }
+
   test("TimedOut should drop values after the timeout") {
 
     val o = List(1, 2, 3, 4).toObservable.zip(Observable.interval(600 millis, IOScheduler())).map(_._1) // emit every 600 millis
