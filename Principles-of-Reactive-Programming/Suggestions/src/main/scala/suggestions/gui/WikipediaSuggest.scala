@@ -88,17 +88,18 @@ object WikipediaSuggest extends SimpleSwingApplication with ConcreteSwingApi wit
 
       _ match {
 
-        case Success(sgs) => suggestionList.listData = sgs
+        case Success(sgs) => 
+          suggestionList.listData = sgs
+          status.text = ""
+          
         case Failure(ex)  => status.text = ex.getMessage()
       }
     }
 
     val selections: Observable[String] = button.clicks.map { b => suggestionList.selection.items.headOption }.filter { _.isDefined }.map { _.get }
 
-    // TO IMPLEMENT
     val pages: Observable[Try[String]] = selections.concatRecovered { term => Observable.from(wikipediaPage(term)) }
 
-    // TO IMPLEMENT
     val pageSubscription: Subscription = pages.observeOn(eventScheduler) subscribe {
 
       _ match {

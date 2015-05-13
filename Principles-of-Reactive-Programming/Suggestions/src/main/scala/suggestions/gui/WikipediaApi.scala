@@ -60,7 +60,7 @@ trait WikipediaApi {
      * After `totalSec` seconds, if `obs` is not yet completed, the result observable becomes completed.
      * Note: uses the existing combinators on observables.
      */
-    def timedOut(totalSec: Long): Observable[T] = obs.throttleWithTimeout(totalSec seconds)
+    def timedOut(totalSec: Long): Observable[T] = obs.dropRight(totalSec seconds)
 
     /**
      * Given a stream of events `obs` and a method `requestMethod` to map a request `T` into
