@@ -12,14 +12,15 @@ import scala.swing.event.Event
 import rx.lang.scala.Observable
 import rx.lang.scala.Subscription
 
-/** Basic facilities for dealing with Swing-like components.
-*
-* Instead of committing to a particular widget implementation
-* functionality has been factored out here to deal only with
-* abstract types like `ValueChanged` or `TextField`.
-* Extractors for abstract events like `ValueChanged` have also
-* been factored out into corresponding abstract `val`s.
-*/
+/**
+ * Basic facilities for dealing with Swing-like components.
+ *
+ * Instead of committing to a particular widget implementation
+ * functionality has been factored out here to deal only with
+ * abstract types like `ValueChanged` or `TextField`.
+ * Extractors for abstract events like `ValueChanged` have also
+ * been factored out into corresponding abstract `val`s.
+ */
 trait SwingApi {
 
   type ValueChanged <: Event
@@ -55,35 +56,34 @@ trait SwingApi {
      */
     def textValues: Observable[String] = Observable.create { o =>
 
-      field.subscribe { case ValueChanged(v) => o.onNext(v.text) }
+      def r: Reaction = { case ValueChanged(v) => o.onNext(v.text) }
 
-      new Subscription {
+      field.subscribe(r)
 
-        override def unsubscribe() {
+      Subscription {
 
-          field.unsubscribe { case _ => o.onCompleted() }
-        }
+        field.unsubscribe(r)
       }
     }
   }
 
   implicit class ButtonOps(button: Button) {
 
-    /** Returns a stream of button clicks.
+    /**
+     * Returns a stream of button clicks.
      *
      * @param field the button
      * @return an observable with a stream of buttons that have been clicked
      */
     def clicks: Observable[Button] = Observable.create { o =>
 
-      button.subscribe { case ButtonClicked(b) => o.onNext(b) }
+      def r: Reaction = { case ButtonClicked(b) => o.onNext(b) }
 
-      new Subscription {
+      button.subscribe(r)
 
-        override def unsubscribe() {
+      Subscription {
 
-          button.unsubscribe { case _ => o.onCompleted() }
-        }
+        button.unsubscribe(r)
       }
     }
 
