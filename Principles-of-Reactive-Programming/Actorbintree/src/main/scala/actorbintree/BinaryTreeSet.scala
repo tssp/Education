@@ -151,6 +151,26 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
   /** Handles `Operation` messages and `CopyTo` requests. */
   val normal: Receive = LoggingReceive {
 
+    case r: Remove =>
+      if(initiallyRemoved) {
+        
+        if(subtrees.contains(Left)) subtrees(Left) ! r
+        else r.requester ! OperationFinished(r.id)
+      }
+      else if(r.elem == elem) {
+
+        removed= true
+        r.requester ! OperationFinished(r.id)
+      }
+      else if(r.elem < elem) {
+       
+        send(Left, r, OperationFinished(r.id))
+      }
+      else if(r.elem > elem){
+        
+        send(Right, r, OperationFinished(r.id))
+      }       
+      
     case c:Contains =>
       if(initiallyRemoved) {
         
