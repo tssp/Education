@@ -140,13 +140,12 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
   // optional
   def receive = normal
 
-  def send(position: Position, o: Operation, r: => OperationReply) = 
+  def sendChildOrReply(position: Position, o: Operation, r: => OperationReply) = 
     if(subtrees.contains(position))
       subtrees(position) ! o
     else
-      o.requester ! r
+     o.requester ! r
       
-  
   // optional
   /** Handles `Operation` messages and `CopyTo` requests. */
   val normal: Receive = LoggingReceive {
@@ -164,11 +163,11 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
       }
       else if(r.elem < elem) {
        
-        send(Left, r, OperationFinished(r.id))
+        sendChildOrReply(Left, r, OperationFinished(r.id))
       }
       else if(r.elem > elem){
         
-        send(Right, r, OperationFinished(r.id))
+        sendChildOrReply(Right, r, OperationFinished(r.id))
       }       
       
     case c:Contains =>
@@ -183,11 +182,11 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
       }
       else if(c.elem < elem) {
        
-        send(Left, c, ContainsResult(c.id, false))
+        sendChildOrReply(Left, c, ContainsResult(c.id, false))
       }
       else if(c.elem > elem){
         
-        send(Right, c, ContainsResult(c.id, false))
+        sendChildOrReply(Right, c, ContainsResult(c.id, false))
       } 
     
     case i:Insert => 
