@@ -79,7 +79,7 @@ class BinaryTreeSet extends Actor with ActorLogging {
       val newRoot = createRoot
 
       context.become(garbageCollecting(newRoot))
-      
+
       root ! CopyTo(newRoot)
   }
 
@@ -96,17 +96,17 @@ class BinaryTreeSet extends Actor with ActorLogging {
       pendingQueue = pendingQueue.enqueue(o)
 
     case CopyFinished =>
-      
+
       while (!pendingQueue.isEmpty) {
 
         val (o, remainingQueue) = pendingQueue.dequeue
 
         pendingQueue = remainingQueue
-        newRoot! o
+        newRoot ! o
       }
-      
+
       root ! PoisonPill
-      root = newRoot 
+      root = newRoot
 
       context.become(normal)
   }
@@ -138,100 +138,103 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
   // optional
   def receive = normal
 
-  def sendChildOrReply(position: Position, o: Operation, r: => OperationReply) =
-    if (subtrees.contains(position))
-      subtrees(position) ! o
-    else
-      o.requester ! r
-
   // optional
   /** Handles `Operation` messages and `CopyTo` requests. */
   val normal: Receive = LoggingReceive {
 
-    case r: Remove =>
-      if (initiallyRemoved) {
+    case msg @ Contains(requester, id, e) =>
+      if (e < elem) {
 
-        if (subtrees.contains(Left)) subtrees(Left) ! r
-        else r.requester ! OperationFinished(r.id)
-      } else if (r.elem == elem) {
+        if (subtrees.contains(Left)) subtrees(Left) ! msg
+        else requester ! ContainsResult(id, false)
 
-        removed = true
-        r.requester ! OperationFinished(r.id)
-      } else if (r.elem < elem) {
+      } else if (e > elem) {
 
-        sendChildOrReply(Left, r, OperationFinished(r.id))
-      } else if (r.elem > elem) {
+        if (subtrees.contains(Right)) subtrees(Right) ! msg
+        else requester ! ContainsResult(id, false)
 
-        sendChildOrReply(Right, r, OperationFinished(r.id))
+      } else {
+
+        requester ! ContainsResult(id, !removed)
       }
 
-    case c: Contains =>
-      if (initiallyRemoved) {
+    case msg @ Insert(requester, id, e) =>
+      if (e < elem) {
 
-        if (subtrees.contains(Left)) subtrees(Left) ! c
-        else c.requester ! ContainsResult(c.id, false)
-      } else if (c.elem == elem) {
+        subtrees.get(Left) match {
 
-        c.requester ! ContainsResult(c.id, !removed)
-      } else if (c.elem < elem) {
+          case Some(child) => child ! msg
+          case None =>
+            subtrees += Left -> context.actorOf(BinaryTreeNode.props(e, false))
+            requester ! OperationFinished(id)
+        }
 
-        sendChildOrReply(Left, c, ContainsResult(c.id, false))
-      } else if (c.elem > elem) {
+      } else if (e > elem) {
 
-        sendChildOrReply(Right, c, ContainsResult(c.id, false))
-      }
+        subtrees.get(Right) match {
 
-    case i: Insert =>
-      if (initiallyRemoved) {
-        subtrees += BinaryTreeNode.Left -> context.actorOf(props(i.elem, false))
-        i.requester ! OperationFinished(i.id)
+          case Some(child) => child ! msg
+          case None =>
+            subtrees += Right -> context.actorOf(BinaryTreeNode.props(e, initiallyRemoved = false))
+            requester ! OperationFinished(id)
+        }
 
-      } else if (i.elem == elem) {
+      } else {
 
         removed = false
-        i.requester ! OperationFinished(i.id)
+        requester ! OperationFinished(id)
+      }
 
-      } else if (i.elem < elem) {
+    case msg @ Remove(requester, id, e) =>
 
-        if (subtrees.contains(Left)) subtrees(Left) ! i
-        else {
-          subtrees += BinaryTreeNode.Left -> context.actorOf(props(i.elem, false))
-          i.requester ! OperationFinished(i.id)
+      if (e < elem) {
+
+        subtrees.get(Left) match {
+
+          case Some(child) => child ! msg
+          case None        => requester ! OperationFinished(id)
         }
-      } else if (i.elem > elem) {
 
-        if (subtrees.contains(Right)) subtrees(Right) ! i
-        else {
-          subtrees += BinaryTreeNode.Right -> context.actorOf(props(i.elem, false))
-          i.requester ! OperationFinished(i.id)
+      } else if (e > elem) {
+
+        subtrees.get(Right) match {
+
+          case Some(child) => child ! msg
+          case None        => requester ! OperationFinished(id)
         }
+
+      } else {
+
+        removed = true
+        requester ! OperationFinished(id)
       }
 
     case CopyTo(newRoot) =>
+
       val id = elem
       val children = subtrees.values.toSet
 
-      if(children.isEmpty && removed) {
-        
+      if (children.isEmpty && removed) {
+
         context.parent ! CopyFinished
-      
+
       } else {
-      
+
         children.foreach { _ ! CopyTo(newRoot) }
-        
+
         context.become(copying(children, removed))
-       
+
         if (!removed) {
-  
+
           newRoot ! Insert(self, id, elem)
-        
+
         } else {
-          
+
           self ! OperationFinished(id)
         }
       }
-      
-    case CopyFinished =>  
+
+    case CopyFinished =>
   }
 
   // optional
