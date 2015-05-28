@@ -13,12 +13,12 @@ import Persistence._
 import org.scalactic.ConversionCheckedTripleEquals
 
 class Step4_SecondaryPersistenceSpec extends TestKit(ActorSystem("Step4SecondaryPersistenceSpec"))
-    with FunSuiteLike
-        with BeforeAndAfterAll
-    with Matchers
-    with ConversionCheckedTripleEquals
-    with ImplicitSender
-    with Tools {
+  with FunSuiteLike
+  with BeforeAndAfterAll
+  with Matchers
+  with ConversionCheckedTripleEquals
+  with ImplicitSender
+  with Tools {
 
   override def afterAll(): Unit = {
     system.shutdown()

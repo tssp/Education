@@ -13,12 +13,12 @@ import scala.util.control.NonFatal
 import org.scalactic.ConversionCheckedTripleEquals
 
 class Step2_SecondarySpec extends TestKit(ActorSystem("Step2SecondarySpec"))
-    with FunSuiteLike
-        with BeforeAndAfterAll
-    with Matchers
-    with ConversionCheckedTripleEquals
-    with ImplicitSender
-    with Tools {
+  with FunSuiteLike
+  with BeforeAndAfterAll
+  with Matchers
+  with ConversionCheckedTripleEquals
+  with ImplicitSender
+  with Tools {
 
   override def afterAll(): Unit = {
     system.shutdown()
@@ -27,7 +27,7 @@ class Step2_SecondarySpec extends TestKit(ActorSystem("Step2SecondarySpec"))
   test("case1: Secondary (in isolation) should properly register itself to the provided Arbiter") {
     val arbiter = TestProbe()
     val secondary = system.actorOf(Replica.props(arbiter.ref, Persistence.props(flaky = false)), "case1-secondary")
-    
+
     arbiter.expectMsg(Join)
   }
 
@@ -92,8 +92,8 @@ class Step2_SecondarySpec extends TestKit(ActorSystem("Step2SecondarySpec"))
 
     val arbiter = TestProbe()
     val replicator = TestProbe()
-        val secondary = system.actorOf(Replica.props(arbiter.ref, Persistence.props(flaky = false)), "case4-secondary")
-        val client = session(secondary)
+    val secondary = system.actorOf(Replica.props(arbiter.ref, Persistence.props(flaky = false)), "case4-secondary")
+    val client = session(secondary)
 
     arbiter.expectMsg(Join)
     arbiter.send(secondary, JoinedSecondary)
@@ -109,5 +109,4 @@ class Step2_SecondarySpec extends TestKit(ActorSystem("Step2SecondarySpec"))
     client.get("k1") should ===(Some("v2"))
   }
 
-  
 }
