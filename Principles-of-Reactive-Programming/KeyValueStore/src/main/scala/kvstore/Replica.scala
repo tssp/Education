@@ -12,6 +12,7 @@ import akka.actor.PoisonPill
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy
 import akka.util.Timeout
+import akka.event.LoggingReceive
 
 object Replica {
   sealed trait Operation {
@@ -36,10 +37,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import Persistence._
   import context.dispatcher
 
-  /*
-   * The contents of this actor is just a suggestion, you can implement it in any way you like.
-   */
-  
   var kv = Map.empty[String, String]
   // a map from secondary replicas to replicators
   var secondaries = Map.empty[ActorRef, ActorRef]
@@ -49,28 +46,48 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   // join the cluster
   arbiter ! Join
 
+  // used when secondary-role to ensure ordering sequence 
+  var expectedSnapshotSequence = 0
+
   def receive = {
     case JoinedPrimary   => context.become(leader)
     case JoinedSecondary => context.become(replica)
   }
 
-  /* TODO Behavior for  the leader role. */
   val leader: Receive = {
-    case Insert(key, value, id) => 
+    case Insert(key, value, id) =>
       kv += key -> value
       sender ! OperationAck(id)
-      
+
     case Remove(key, id) =>
       kv -= key
       sender ! OperationAck(id)
-      
-    case Get(key, id) =>  
+
+    case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
   }
 
-  /* TODO Behavior for the replica role. */
   val replica: Receive = {
-    case _ =>
+
+    case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
+    // noop
+
+    case Snapshot(key, valueOption, seq) if seq < expectedSnapshotSequence =>
+      sender ! SnapshotAck(key, seq)
+
+    case Snapshot(key, valueOption, seq) =>
+      valueOption match {
+
+        case Some(value) =>
+          kv += key -> value
+        case None =>
+          kv -= key
+      }
+      expectedSnapshotSequence += 1
+      sender ! SnapshotAck(key, seq)
+
+    case Get(key, id) =>
+      sender ! GetResult(key, kv.get(key), id)
   }
 
 }
