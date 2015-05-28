@@ -45,10 +45,18 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
   // join the cluster
   arbiter ! Join
-
+  
   // used when secondary-role to ensure ordering sequence 
   var expectedSnapshotSequence = 0
+  
+  // actor that serves a persistence layer
+  val persistence= context.actorOf(persistenceProps, "persistence")
 
+  // triggers re-send to persistence
+  case object Tick
+
+  
+  
   def receive = {
     case JoinedPrimary   => context.become(leader)
     case JoinedSecondary => context.become(replica)
@@ -67,7 +75,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       sender ! GetResult(key, kv.get(key), id)
   }
 
-  val replica: Receive = {
+  val replica: Receive = LoggingReceive {
 
     case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
     // noop
@@ -76,6 +84,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       sender ! SnapshotAck(key, seq)
 
     case Snapshot(key, valueOption, seq) =>
+
       valueOption match {
 
         case Some(value) =>
@@ -83,12 +92,37 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
         case None =>
           kv -= key
       }
+      
       expectedSnapshotSequence += 1
-      sender ! SnapshotAck(key, seq)
 
-    case Get(key, id) =>
-      sender ! GetResult(key, kv.get(key), id)
+      context.become(handlePersistence(sender, Persist(key, valueOption, seq), SnapshotAck(key, seq)))
+      
+    case get:Get => handleGet(sender, get)
   }
+  
+  def handleGet(requester: ActorRef, get: Get) = requester ! GetResult(get.key, kv.get(get.key), get.id) 
 
+  def handlePersistence(requester: ActorRef, persist:Persist, ack: Any): Receive = LoggingReceive { 
+    
+    import scala.language.postfixOps
+
+    // register periodic schedule to re-transmit persistence message
+    val scheduler= context.system.scheduler.schedule(100 millis, 100 millis, self, Tick)
+    
+    persistence ! persist
+    
+    {
+      case get:Get => 
+        handleGet(sender, get) 
+      
+      case Tick =>
+        persistence ! persist
+      
+      case Persisted(key, id) if key==persist.key && id == persist.id =>
+        scheduler.cancel
+        requester ! ack
+        
+    }
+  }
 }
 
