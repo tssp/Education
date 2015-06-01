@@ -12,6 +12,7 @@ import akka.actor.PoisonPill
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy
 import akka.util.Timeout
+import akka.event.LoggingReceive
 
 object Replica {
   sealed trait Operation {
@@ -45,6 +46,9 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   // initialize replica
   arbiter ! Join
   
+  // used when secondary-role to ensure ordering sequence 
+  var expectedSnapshotSequence = 0
+  
   def receive = {
     case JoinedPrimary   => context.become(leader)
     case JoinedSecondary => context.become(replica)
@@ -63,8 +67,30 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       sender ! GetResult(key, kv.get(key), id)
   }
 
-  val replica: Receive = {
-    case _ =>
+  val replica: Receive = LoggingReceive {
+    
+    case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
+      // noop
+
+    case Snapshot(key, valueOption, seq) if seq < expectedSnapshotSequence =>
+      sender ! SnapshotAck(key, seq)
+
+    case Snapshot(key, valueOption, seq) =>
+
+      valueOption match {
+
+        case Some(value) =>
+          kv += key -> value
+        case None =>
+          kv -= key
+      }
+
+      expectedSnapshotSequence += 1
+      
+      sender ! SnapshotAck(key, seq)
+    
+    case Get(key, id) =>
+      sender ! GetResult(key, kv.get(key), id)
   }
 
 }
