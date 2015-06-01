@@ -87,7 +87,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   /**
    * Secondary Replica Code
    */
-  val replica: Receive = {
+  val replica: Receive = LoggingReceive {
 
     case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
     // noop
@@ -140,15 +140,16 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     secondaries = allReplicaNodes
   }
 
-  var messageQueue = Queue[Operation]()
+  var secondaryQueue = Queue[Any]()
+  var primaryQueue = Queue[Operation]()
 
   def persistPrimary(requester: ActorRef, remaining: Set[ActorRef], persisted: Boolean, persist: Persist, schedulers: Iterable[Cancellable], ack: OperationAck, nak: OperationFailed): Receive = LoggingReceive {
 
     case r: Remove =>
-      messageQueue = messageQueue.enqueue(r)
+      primaryQueue = primaryQueue.enqueue(r)
 
     case i: Insert =>
-      messageQueue = messageQueue.enqueue(i)
+      primaryQueue = primaryQueue.enqueue(i)
 
     case Replicas(nodes) =>
       
@@ -176,13 +177,13 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
         requester ! ack
 
-        while (!messageQueue.isEmpty) {
+        while (!primaryQueue.isEmpty) {
 
-          val (message, queue) = messageQueue.dequeue
+          val (message, queue) = primaryQueue.dequeue
 
           self ! message
 
-          messageQueue = queue
+          primaryQueue = queue
         }
         schedulers.foreach(_.cancel())
 
@@ -202,13 +203,13 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       else
         requester ! nak
 
-      while (!messageQueue.isEmpty) {
+      while (!primaryQueue.isEmpty) {
 
-        val (message, queue) = messageQueue.dequeue
+        val (message, queue) = primaryQueue.dequeue
 
         self ! message
 
-        messageQueue = queue
+        primaryQueue = queue
       }
 
       context.become(leader)
@@ -245,16 +246,41 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     persistence ! persist
 
     {
+      case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
+      // noop
+  
+      
+      case Snapshot(key, valueOption, seq) if seq < expectedSnapshotSequence =>
+          sender ! SnapshotAck(key, seq)
+          
+      case s:Snapshot => 
+        secondaryQueue = secondaryQueue.enqueue(s)
+      
       case Get(key, id) =>
         sender ! GetResult(key, kv.get(key), id)
 
       case Persisted(key, id) if key == persist.key && id == persist.id =>
         scheduler.cancel
+        
         requester ! ack
+
+        while (!secondaryQueue.isEmpty) {
+  
+          val (message, queue) = secondaryQueue.dequeue
+  
+          self ! message
+  
+          secondaryQueue = queue
+        }
+        
+        context.become(replica)
+        
 
       case TickResendPersist =>
         persistence ! persist
 
+        
+        
     }
   }
 }
