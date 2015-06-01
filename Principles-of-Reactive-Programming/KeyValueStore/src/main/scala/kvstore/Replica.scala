@@ -36,6 +36,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import Replicator._
   import Persistence._
   import context.dispatcher
+  import scala.language.postfixOps
 
   var kv = Map.empty[String, String]
   // a map from secondary replicas to replicators
@@ -46,8 +47,14 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   // initialize replica
   arbiter ! Join
   
+  // actor that serves a persistence layer
+  val persistence = context.actorOf(persistenceProps, "persistence")
+  
   // used when secondary-role to ensure ordering sequence 
   var expectedSnapshotSequence = 0
+  
+  // TickResendPersist
+  object TickResendPersist
   
   def receive = {
     case JoinedPrimary   => context.become(leader)
@@ -93,11 +100,34 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
       expectedSnapshotSequence += 1
       
-      sender ! SnapshotAck(key, seq)
+      context.become(persistSecondary(sender, Persist(key, valueOption, seq), SnapshotAck(key, seq)))
+      
+      //sender ! SnapshotAck(key, seq)
     
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
   }
 
+  def persistSecondary(requester: ActorRef, persist: Persist, ack: SnapshotAck): Receive = LoggingReceive {
+    
+    // register periodic schedule to re-transmit persistence message
+    val scheduler = context.system.scheduler.schedule(100 millis, 100 millis, self, TickResendPersist)
+
+    
+    persistence ! persist
+    
+    {
+      case Get(key, id) =>
+        sender ! GetResult(key, kv.get(key), id)
+      
+      case Persisted(key, id) if key == persist.key && id == persist.id =>
+        scheduler.cancel
+        requester ! ack
+        
+      case TickResendPersist => 
+        persistence ! persist
+        
+    }
+  }
 }
 
