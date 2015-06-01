@@ -206,7 +206,6 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
         val (message, queue) = messageQueue.dequeue
 
-        println("MESSAGE " +message)
         self ! message
 
         messageQueue = queue
