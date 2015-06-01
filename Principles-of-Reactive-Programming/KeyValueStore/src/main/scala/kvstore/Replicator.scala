@@ -4,6 +4,7 @@ import akka.actor.Props
 import akka.actor.Actor
 import akka.actor.ActorRef
 import scala.concurrent.duration._
+import akka.event.LoggingReceive
 
 object Replicator {
   case class Replicate(key: String, valueOption: Option[String], id: Long)
@@ -40,24 +41,25 @@ class Replicator(val replica: ActorRef) extends Actor {
   def sendReplicate(seq: Long, s: ActorRef, r: Replicate): Unit = replica ! Snapshot(r.key, r.valueOption, seq)
   
   /* Behavior for the Replicator */
-  def receive: Receive = {
+  def receive: Receive = LoggingReceive {
     
     case r:Replicate =>
       val seq = nextSeq
       acks += seq -> (sender, r)
       sendReplicate(seq, sender, r)
       
-    case Replicated(key, id) =>
+    case TickResendAll =>
+      acks.toList.sortBy(_._1).foreach { case (seq, (s, r)) => sendReplicate(seq, s, r) }
+      
+      
+    case SnapshotAck(key, id) =>
+      
       acks.get(id).foreach { case(origin, replicate) =>
-        
-        origin ! SnapshotAck(key, replicate.id)
+      
+        origin ! Replicated(key, replicate.id)
       }
       
       acks -= id
-      
-      
-    case TickResendAll =>
-      acks.toList.sortBy(_._1).foreach { case (seq, (s, r)) => sendReplicate(seq, s, r) }      
   }
 
 }

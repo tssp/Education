@@ -13,6 +13,7 @@ import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy
 import akka.util.Timeout
 import akka.event.LoggingReceive
+import akka.actor.Cancellable
 
 object Replica {
   sealed trait Operation {
@@ -38,11 +39,11 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   import context.dispatcher
   import scala.language.postfixOps
 
+  // local store
   var kv = Map.empty[String, String]
+
   // a map from secondary replicas to replicators
   var secondaries = Map.empty[ActorRef, ActorRef]
-  // the current set of replicators
-  var replicators = Set.empty[ActorRef]
 
   // initialize replica
   arbiter ! Join
@@ -69,15 +70,30 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Insert(key, value, id) =>
       kv += key -> value
       
-      context.become(persistPrimary(sender, Persist(key, Some(value), id), OperationAck(id), OperationFailed(id)))
+      context.become(persistPrimary(sender, secondaries.values.toSet, Persist(key, Some(value), id), OperationAck(id), OperationFailed(id)))
       
     case Remove(key, id) =>
       kv -= key
-      
-      context.become(persistPrimary(sender, Persist(key, None, id), OperationAck(id), OperationFailed(id)))
+     
+      context.become(persistPrimary(sender, secondaries.values.toSet, Persist(key, None, id), OperationAck(id), OperationFailed(id)))
       
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
+
+    case Replicas(nodes) =>
+
+      // do some filtering and mapping stuff
+      val filtered = nodes.filter(_ != self)
+
+      val obsoleteReplicaNodes = secondaries.filter { case (replica, replicator) => !filtered.contains(replica) }
+      val allReplicaNodes = filtered.map { replica => replica -> secondaries.getOrElse(replica, context.actorOf(Props(classOf[Replicator], replica))) }.toMap
+      val newReplicaNodes = allReplicaNodes.filter { case (replica, _) => secondaries.contains(replica) }
+      
+      // Kill obsolete replica nodes
+      obsoleteReplicaNodes.foreach{ case(replica, replicator) => replicator ! PoisonPill }
+      
+      // Finally done!
+      secondaries= allReplicaNodes
   }
 
   /**
@@ -110,8 +126,33 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
   }
+
+  def persistPrimary(requester: ActorRef, remaining: Set[ActorRef], persisted: Boolean, persist: Persist, schedulers: Iterable[Cancellable], ack: OperationAck, nak: OperationFailed): Receive = LoggingReceive {
+     
+    case Get(key, id) =>
+      sender ! GetResult(key, kv.get(key), id)
+
+    case Persisted(key, id) if key == persist.key && id == persist.id =>
+      context.become(persistPrimary(requester, remaining, true, persist, schedulers, ack, nak))
+      
+    case TickCancelPersist =>
+      schedulers.foreach(_.cancel)
+      
+      if(persisted && remaining.isEmpty)
+        requester ! ack
+      else
+        requester ! nak
+
+    case TickResendPersist =>
+      if(!persisted) persistence ! persist
+      
+      remaining.foreach { _ ! Replicate(persist.key, persist.valueOption, persist.id) }
+
+    case r: Replicated =>
+      context.become(persistPrimary(requester, remaining - sender, persisted, persist, schedulers, ack, nak))
+  }
   
-  def persistPrimary(requester: ActorRef, persist: Persist, ack: OperationAck, nak: OperationFailed): Receive = LoggingReceive {
+  def persistPrimary(requester: ActorRef, remaining: Set[ActorRef], persist: Persist, ack: OperationAck, nak: OperationFailed): Receive = LoggingReceive {
     
     // register periodic schedule to re-transmit persistence message
     val s1= context.system.scheduler.scheduleOnce(1000 millis, self, TickCancelPersist)
@@ -120,32 +161,16 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     val schedulers= List(s1, s2)
     
     persistence ! persist
+    remaining.foreach{_ ! Replicate(persist.key, persist.valueOption, persist.id)}
     
-    {
-      case Get(key, id) =>
-        sender ! GetResult(key, kv.get(key), id)
-        
-      case Persisted(key, id) if key == persist.key && id == persist.id =>
-        schedulers.foreach(_.cancel)
-        requester ! ack
-      
-      case TickCancelPersist =>
-        println("XXXXXXXXXXXXXXX")
-        schedulers.foreach(_.cancel)
-        requester ! nak
-        
-      case TickResendPersist => 
-        persistence ! persist
-        
-    }
+    persistPrimary(requester, remaining, false, persist, schedulers, ack, nak)
   }
 
-  def persistSecondary(requester: ActorRef, persist: Persist, ack: SnapshotAck): Receive = {
+  def persistSecondary(requester: ActorRef, persist: Persist, ack: SnapshotAck): Receive = LoggingReceive {
     
     // register periodic schedule to re-transmit persistence message
     val scheduler = context.system.scheduler.schedule(100 millis, 100 millis, self, TickResendPersist)
 
-    
     persistence ! persist
     
     {
