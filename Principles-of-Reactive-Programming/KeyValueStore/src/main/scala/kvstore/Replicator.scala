@@ -19,16 +19,16 @@ class Replicator(val replica: ActorRef) extends Actor {
   import Replicator._
   import Replica._
   import context.dispatcher
-  
-  /*
-   * The contents of this actor is just a suggestion, you can implement it in any way you like.
-   */
+  import scala.language.postfixOps
 
+  object TickResendAll
+  
   // map from sequence number to pair of sender and request
   var acks = Map.empty[Long, (ActorRef, Replicate)]
-  // a sequence of not-yet-sent snapshots (you can disregard this if not implementing batching)
-  var pending = Vector.empty[Snapshot]
-  
+
+  // register period schedule to retransmit all non-acknowledged mesages
+  context.system.scheduler.schedule(200 millis, 200 millis, self, TickResendAll)
+
   var _seqCounter = 0L
   def nextSeq = {
     val ret = _seqCounter
@@ -36,10 +36,28 @@ class Replicator(val replica: ActorRef) extends Actor {
     ret
   }
 
+  // convient method
+  def sendReplicate(seq: Long, s: ActorRef, r: Replicate): Unit = replica ! Snapshot(r.key, r.valueOption, seq)
   
-  /* TODO Behavior for the Replicator. */
+  /* Behavior for the Replicator */
   def receive: Receive = {
-    case _ =>
+    
+    case r:Replicate =>
+      val seq = nextSeq
+      acks += seq -> (sender, r)
+      sendReplicate(seq, sender, r)
+      
+    case Replicated(key, id) =>
+      acks.get(id).foreach { case(origin, replicate) =>
+        
+        origin ! SnapshotAck(key, replicate.id)
+      }
+      
+      acks -= id
+      
+      
+    case TickResendAll =>
+      acks.toList.sortBy(_._1).foreach { case (seq, (s, r)) => sendReplicate(seq, s, r) }      
   }
 
 }

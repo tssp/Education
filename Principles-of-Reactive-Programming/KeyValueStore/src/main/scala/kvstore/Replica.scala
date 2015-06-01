@@ -54,6 +54,9 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case JoinedSecondary => context.become(replica)
   }
 
+  /**
+   * Primary Replica Code
+   */
   val leader: Receive = {
     case Insert(key, value, id) =>
       kv += key -> value
@@ -67,6 +70,9 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
       sender ! GetResult(key, kv.get(key), id)
   }
 
+  /**
+   * Secondary Replica Code
+   */
   val replica: Receive = LoggingReceive {
     
     case Snapshot(key, valueOption, seq) if seq > expectedSnapshotSequence =>
