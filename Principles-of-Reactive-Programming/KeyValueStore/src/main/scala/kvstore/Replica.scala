@@ -55,6 +55,7 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   
   // TickResendPersist
   object TickResendPersist
+  object TickCancelPersist
   
   def receive = {
     case JoinedPrimary   => context.become(leader)
@@ -67,11 +68,13 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
   val leader: Receive = {
     case Insert(key, value, id) =>
       kv += key -> value
-      sender ! OperationAck(id)
+      
+      context.become(persistPrimary(sender, Persist(key, Some(value), id), OperationAck(id), OperationFailed(id)))
       
     case Remove(key, id) =>
       kv -= key
-      sender ! OperationAck(id)
+      
+      context.become(persistPrimary(sender, Persist(key, None, id), OperationAck(id), OperationFailed(id)))
       
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
@@ -107,8 +110,37 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
     case Get(key, id) =>
       sender ! GetResult(key, kv.get(key), id)
   }
+  
+  def persistPrimary(requester: ActorRef, persist: Persist, ack: OperationAck, nak: OperationFailed): Receive = LoggingReceive {
+    
+    // register periodic schedule to re-transmit persistence message
+    val s1= context.system.scheduler.scheduleOnce(1000 millis, self, TickCancelPersist)
+    val s2= context.system.scheduler.schedule(100 millis, 100 millis, self,  TickResendPersist)
+    
+    val schedulers= List(s1, s2)
+    
+    persistence ! persist
+    
+    {
+      case Get(key, id) =>
+        sender ! GetResult(key, kv.get(key), id)
+        
+      case Persisted(key, id) if key == persist.key && id == persist.id =>
+        schedulers.foreach(_.cancel)
+        requester ! ack
+      
+      case TickCancelPersist =>
+        println("XXXXXXXXXXXXXXX")
+        schedulers.foreach(_.cancel)
+        requester ! nak
+        
+      case TickResendPersist => 
+        persistence ! persist
+        
+    }
+  }
 
-  def persistSecondary(requester: ActorRef, persist: Persist, ack: SnapshotAck): Receive = LoggingReceive {
+  def persistSecondary(requester: ActorRef, persist: Persist, ack: SnapshotAck): Receive = {
     
     // register periodic schedule to re-transmit persistence message
     val scheduler = context.system.scheduler.schedule(100 millis, 100 millis, self, TickResendPersist)
