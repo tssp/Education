@@ -13,5 +13,6 @@ Parts of the sources are directly taken from the courses and are not my own work
 
 ## École Polytechnique Fédérale de Lausanne
 
-*  Functional Programming Principles in Scala (May/June/July 2014)
+* Functional Programming Principles in Scala (May/June/July 2014)
 * Principles of Reactive Programming (April/May/June 2015)
+* Scala Specialization (July 2016)
